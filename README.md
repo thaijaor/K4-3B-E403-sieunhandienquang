@@ -8,7 +8,7 @@
 
 | Họ và Tên | Mã Học Viên | Vai trò chính | Phần việc đảm nhiệm trong dự án |
 |---|---|---|---|
-| Nguyễn Hồng Thái | 2A202602894 |  |  |
+| Nguyễn Hồng Thái | 2A202602894 | Đội trưởng |  |
 | Trần Mạnh Tùng | 2A202602879 |  |  |
 | Nguyễn Mạnh Cường | 2A202602650 |  |  |
 
