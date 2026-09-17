@@ -1,0 +1,16 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# course data pack — không commit (quy định bảo mật dữ liệu)
+data/
+*-pack/
+
+# python / node
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
+.DS_Store
