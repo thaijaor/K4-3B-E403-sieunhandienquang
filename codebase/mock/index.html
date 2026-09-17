@@ -19,7 +19,7 @@
   </style>
 </helmet>
 
-<div style="width:100%;display:flex;justify-content:flex-end;padding:0 8px 6px;">
+<div style="width:100%;box-sizing:border-box;display:flex;justify-content:flex-end;padding:0 8px 6px;">
   <div style="background:#171717;color:#fff;font-size:11px;font-weight:600;letter-spacing:.04em;padding:4px 10px;border-radius:8px;">Prototype · nhóm sieunhandienquang</div>
 </div>
 <div id="vlearn-scale-wrap" style="width:100%;overflow:hidden;"><div id="vlearn-stage" style="width:1440px;height:900px;transform-origin:top left;display:flex;flex-direction:column;background:#f4f4f4;position:relative;font-size:16px;color:#2e2e2e;">
@@ -263,9 +263,12 @@ class Component extends DCLogic {
       let scale = Math.min(availW / 1440, availH / 900);
       if (!isFinite(scale) || scale <= 0) scale = 1;
       scale = Math.max(0.1, scale);
+      // Keep controls proportional, but let the flex layout fill the viewport.
+      stage.style.width = (availW / scale) + 'px';
+      stage.style.height = (availH / scale) + 'px';
       stage.style.transform = 'scale(' + scale + ')';
-      wrap.style.height = Math.floor(900 * scale) + 'px';
-      wrap.style.width = Math.floor(1440 * scale) + 'px';
+      wrap.style.height = availH + 'px';
+      wrap.style.width = '100%';
     };
     this.applyScale();
     window.addEventListener('resize', this.applyScale);
