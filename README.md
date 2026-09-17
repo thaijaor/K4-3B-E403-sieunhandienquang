@@ -4,13 +4,13 @@
 
 ## 👥 Thành viên nhóm & Phân công vai trò
 
-**Lớp:** 3B · **Phòng:** E403 · **Cụm:** ____ · **Track:** ____
+**Lớp:** 3B · **Phòng:** E403 · **Cụm:** ____ · **Track:** A1 · VLearn Tutor
 
 | Họ và Tên | Mã Học Viên | Vai trò chính | Phần việc đảm nhiệm trong dự án |
 |---|---|---|---|
-| Nguyễn Hồng Thái | 2A202602894 | Đội trưởng |  |
-| Trần Mạnh Tùng | 2A202602879 |  |  |
-| Nguyễn Mạnh Cường | 2A202602650 |  |  |
+| Nguyễn Hồng Thái | 2A202602894 | Đội trưởng · Product / Spec | Canvas; evidence + bảng impact (spec §1–§2); lát cắt, non-goals, automation, ≥4 nguyên tắc HAX/PAIR (§4); nộp 5 form; slide; dẫn pitch |
+| Trần Mạnh Tùng | 2A202602879 | Build | Prototype: tìm đoạn nguồn trong transcript/slide, gọi LLM, quyết định trả lời / hỏi lại / từ chối, UI hiển thị citation; log/trace; video CP3 và video dự phòng CP5 |
+| Nguyễn Mạnh Cường | 2A202602650 | Eval / Quality | Golden set ≥20 case từ chatlog; chiều chất lượng + quality bar; chạy trọn bộ, bảng %; 4 lớp chỗ khó, ≥8 kịch bản, 4 đường đi (spec §5–§7) |
 
 > Nhóm copy nguyên file README này về repo của mình, rồi điền bảng trên. Cột **Phần việc đảm nhiệm** ghi càng cụ thể càng tốt.
 
