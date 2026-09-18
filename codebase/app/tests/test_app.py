@@ -129,6 +129,12 @@ class ApplicationTests(unittest.TestCase):
                 self.services.reply_override = {"decision": "answer", "text": "bad", "citations": citations}
                 self.assertEqual(self.ask(self.chat()).status_code, 502)
 
+    def test_chat_reply_needs_no_citation(self):
+        self.services.reply_override = {"decision": "chat", "text": "Chào bạn!"}
+        response = self.ask(self.chat())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["decision"], "chat")
+
     def test_invalid_decision_and_unsafe_action_rejected(self):
         for reply in [{"decision": "oops", "text": "bad"}, {"decision": "clarify", "text": "bad", "actions": [{"label": "Run", "type": "javascript", "value": "alert(1)"}]}, {"decision": "clarify", "text": "bad", "actions": [{"label": "Open", "type": "open_source", "value": "unknown"}]}]:
             self.services.reply_override = reply

@@ -67,7 +67,7 @@ class Proposal(Contract):
 
 
 class AIReply(Contract):
-    decision: Literal["answer", "clarify", "abstain"]
+    decision: Literal["answer", "chat", "clarify", "abstain"]
     text: str = Field(min_length=1, max_length=16000)
     citations: list[Citation] = Field(default_factory=list, max_length=20)
     actions: list[Action] = Field(default_factory=list, max_length=8)
