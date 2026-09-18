@@ -1,13 +1,27 @@
-# Đọc câu trả lời cùng bằng chứng
+# Kiểm soát độ tin cậy và Xử lý ranh giới tri thức trong hệ thống RAG
 
-## Một câu trả lời có thể kiểm chứng {#kiem-chung}
+## Kiến trúc RAG và Dẫn nguồn kiểm chứng {#kiem-chung}
 
-Câu trả lời có dẫn nguồn giúp người đọc đối chiếu phát biểu với tài liệu. Một citation cần chỉ đến đúng đoạn chứa bằng chứng. Việc có đường dẫn không tự chứng minh nội dung trả lời là đúng.
+Kiến trúc RAG (Retrieval-Augmented Generation) kết hợp giữa bộ truy xuất dữ liệu (Retrieval) và mô hình ngôn ngữ lớn (LLM). Khi người dùng đặt câu hỏi, hệ thống sẽ tìm kiếm các đoạn thông tin liên quan nhất từ kho tri thức để đưa vào ngữ cảnh (context) cho mô hình sinh câu trả lời.
 
-- Đọc phát biểu chính.
-- Mở đoạn được dẫn.
-- Kiểm tra đoạn đó có thực sự hỗ trợ phát biểu hay không.
+Một citation (dẫn nguồn) chuẩn là bằng chứng giúp người học đối chiếu câu trả lời của AI với nội dung bài học gốc. Việc trích dẫn minh bạch giải quyết vấn đề lớn nhất của LLM là người dùng không biết thông tin bắt nguồn từ đâu.
 
-## Khi chưa đủ căn cứ {#thieu-can-cu}
+- Đọc phát biểu được tổng hợp bởi trợ giảng AI.
+- Mở đoạn trích dẫn (citation) được đính kèm câu trả lời.
+- Đối chiếu xem đoạn văn bản gốc có thực sự chứng minh phát biểu hay không.
 
-Nếu chưa rõ người học đang hỏi đoạn nào, trợ giảng cần hỏi lại để xác định ý. Nếu tài liệu đang mở không có căn cứ trả lời, trợ giảng nên nói rõ giới hạn và gợi ý bước tiếp theo.
+## Xử lý ngoài phạm vi (Out-of-Domain) và Từ chối an toàn {#thieu-can-cu}
+
+Trong các hệ thống RAG thực tế, việc xử lý các câu hỏi nằm ngoài phạm vi tri thức (Out-of-Domain) là tối quan trọng. Nếu bài học không chứa câu trả lời, mô hình bắt buộc phải chọn phương án từ chối (abstain) thay vì cố gắng suy đoán hoặc bịa đặt thông tin.
+
+Nếu câu hỏi quá ngắn hoặc không rõ nghĩa (ví dụ "giải thích đoạn này"), trợ giảng cần chủ động hỏi lại (clarify) để xác định mục tiêu học tập của người dùng.
+
+- Không tự ý phỏng đoán khi tài liệu hiện tại không đề cập.
+- Từ chối lịch sự và gợi ý các chủ đề có sẵn trong bài.
+- Yêu cầu học viên cung cấp thêm ngữ cảnh khi câu hỏi mơ hồ.
+
+## Ảo giác của mô hình và cách hạn chế {#ao-giac}
+
+Ảo giác (Hallucination) là hiện tượng mô hình ngôn ngữ lớn tự tin đưa ra các thông tin hoàn toàn sai lệch hoặc không có căn cứ thực tế. Nguyên nhân là do LLM hoạt động theo cơ chế dự đoán từ tiếp theo dựa trên xác suất thống kê chứ không thực sự suy luận như con người.
+
+Kỹ thuật Grounding giúp neo chặt nội dung câu trả lời vào bằng chứng tài liệu được cung cấp. Bằng cách kết hợp RAG với lớp kiểm duyệt code guardrails, hệ thống có thể phát hiện và loại bỏ các phát biểu thiếu trích dẫn trước khi trả về cho người dùng.
