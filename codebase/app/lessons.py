@@ -16,12 +16,18 @@ def load_lessons(manifest_path):
         if not path.is_relative_to(manifest_path.parent.resolve()) or path.suffix != ".md":
             raise ValueError("Markdown must be inside the manifest directory")
         text = path.read_text(encoding="utf-8")
-        headings = list(re.finditer(r"^## (.+?) \{#([a-z0-9-]+)\}\s*$", text, re.M))
+        headings = list(re.finditer(r"^## (.+?)(?:\s+\{#([a-z0-9-]+)\})?\s*$", text, re.M))
         if not headings:
-            raise ValueError("Markdown needs explicit H2 citation anchors")
+            raise ValueError("Markdown needs at least one H2 heading")
         lesson["sources"] = []
         for index, match in enumerate(headings):
-            title, anchor = match.groups()
+            title = match.group(1).strip()
+            explicit_anchor = match.group(2)
+            if explicit_anchor:
+                anchor = explicit_anchor
+            else:
+                slug = re.sub(r"[^a-zA-Z0-9]+", "-", title.lower()).strip("-")
+                anchor = slug if slug else f"section-{index+1}"
             end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
             body = text[match.end():end].strip()
             lesson["sources"].append({"id": f"{lesson['id']}--{anchor}", "kind": "markdown",

@@ -24,7 +24,8 @@ LOG = logging.getLogger("agent")
 def create_app(llm=None, lessons_file=None, env_file=HERE / ".env", db_path=None):
     if env_file:
         load_dotenv(env_file)
-    lessons_file = lessons_file or os.getenv("LESSONS_FILE", HERE.parent / "app" / "lessons.sample.json")
+    lessons_env = os.getenv("LESSONS_FILE", "").strip()
+    lessons_file = lessons_file or lessons_env or (HERE.parent / "app" / "lessons.sample.json")
     lessons = {lesson["id"]: lesson for lesson in load_lessons(lessons_file)}
     llm = llm or LLM()
     service_key = os.getenv("SERVICE_API_KEY", "")

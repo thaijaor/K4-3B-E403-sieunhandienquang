@@ -133,12 +133,11 @@ function renderMessages() {
       }
       bubble.append(citations);
     }
-    const actions = node('div', undefined, 'actions');
-    for (const action of m.actions || []) actions.append(button(action.label, () => action.type === 'open_source' ? openSource(action.value) : sendText(action.value)));
-    if (m.role === 'assistant') {
-      for (const text of ['Ngắn hơn', 'Có ví dụ', 'Mình hỏi ý khác']) actions.append(button(text, () => sendText(text), 'text-button'));
+    if (m.actions?.length) {
+      const actions = node('div', undefined, 'actions');
+      for (const action of m.actions) actions.append(button(action.label, () => action.type === 'open_source' ? openSource(action.value) : sendText(action.value)));
+      bubble.append(actions);
     }
-    bubble.append(actions);
     for (const proposal of m.persona_proposals || []) bubble.append(proposalCard(proposal));
     root.append(bubble);
   }

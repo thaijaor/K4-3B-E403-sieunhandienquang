@@ -4,7 +4,7 @@ import json
 import re
 from pathlib import Path
 
-HEADING = re.compile(r"^## (.+?) \{#([a-z0-9-]+)\}\s*$", re.M)
+HEADING = re.compile(r"^## (.+?)(?:\s+\{#([a-z0-9-]+)\})?\s*$", re.M)
 
 
 def load_lessons(manifest_path):
@@ -18,7 +18,13 @@ def load_lessons(manifest_path):
         headings = list(HEADING.finditer(text))
         lesson["sources"] = []
         for index, match in enumerate(headings):
-            title, anchor = match.groups()
+            title = match.group(1).strip()
+            explicit_anchor = match.group(2)
+            if explicit_anchor:
+                anchor = explicit_anchor
+            else:
+                slug = re.sub(r"[^a-zA-Z0-9]+", "-", title.lower()).strip("-")
+                anchor = slug if slug else f"section-{index+1}"
             end = headings[index + 1].start() if index + 1 < len(headings) else len(text)
             lesson["sources"].append({"id": f"{lesson['id']}--{anchor}", "locator": f"{lesson['markdown']}#{anchor}",
                                       "title": title, "text": text[match.end():end].strip()})
