@@ -36,7 +36,7 @@ function controls() {
   $('send').disabled = !state.chat || busy || !$('question').value.trim();
   $('new-chat').disabled = state.creating || state.navigating || !state.lesson;
   document.querySelectorAll('[data-lesson]').forEach(el => el.disabled = state.creating || state.navigating);
-  $('compose-hint').textContent = busy ? 'Đang xử lý câu hỏi…' : 'Enter để gửi · Shift + Enter xuống dòng';
+  $('compose-hint').textContent = busy ? 'Đang xử lý câu hỏi…' : 'AI có thể sai · mở nguồn để đối chiếu';
 }
 async function loadLesson(id) {
   const lesson = await api(`/lessons/${encodeURIComponent(id)}`);
@@ -108,10 +108,8 @@ async function openSource(sourceId, chatId = state.chat?.id) {
 function renderMessages() {
   const root = $('messages'); root.replaceChildren();
   if (!state.chat?.messages.length) {
-    const empty = node('div', undefined, 'empty'); empty.append(node('span', '✦', 'spark'), node('h3', 'Mình cùng hiểu bài nhé'), node('p', `Đang mở: ${state.lesson?.title || ''}`), node('p', 'Hỏi về nội dung đang đọc. Mở nguồn để kiểm chứng câu trả lời.'));
-    const suggestions = node('div', undefined, 'suggestions');
-    for (const text of ['Tóm tắt ý chính', 'Giải thích đoạn này']) suggestions.append(button(text, () => { $('question').value = text; controls(); $('question').focus(); }));
-    empty.append(suggestions); root.append(empty); return;
+    const empty = node('div', undefined, 'empty'); empty.append(node('h3', 'Mình cùng hiểu bài nhé'), node('p', `Đang mở: ${state.lesson?.title || ''}`));
+    root.append(empty); return;
   }
   for (const m of state.chat.messages) {
     const bubble = node('article', undefined, `message ${m.role === 'user' ? 'user' : 'assistant'}`);
@@ -237,6 +235,33 @@ $('question').addEventListener('input', controls);
 $('question').addEventListener('keydown', e => {if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {e.preventDefault(); send();}});
 $('new-chat').addEventListener('click', () => newChat());
 $('clear-selection').addEventListener('click', () => {state.selected = []; selection();});
+// Panel width: drag the left edge (or arrow keys on it); remembered per browser.
+const TUTOR_MIN = 320, LESSON_MIN = 360;
+function setTutorWidth(px) {
+  const ws = document.querySelector('.workspace');
+  const max = Math.max(TUTOR_MIN, ws.clientWidth - LESSON_MIN - (ws.classList.contains('sidebar-hidden') ? 0 : 240));
+  const width = Math.round(Math.min(max, Math.max(TUTOR_MIN, px)));
+  ws.style.setProperty('--tutor-w', `${width}px`);
+  $('tutor-resizer').setAttribute('aria-valuenow', String(width));
+  return width;
+}
+(() => {
+  const handle = $('tutor-resizer'); let saved = null;
+  try { saved = Number(localStorage.getItem('tutor.width')) || null; } catch {}
+  if (saved) setTutorWidth(saved);
+  const store = (w) => { try { localStorage.setItem('tutor.width', String(w)); } catch {} };
+  const right = () => $('tutor-panel').getBoundingClientRect().right;
+  handle.addEventListener('pointerdown', e => {
+    e.preventDefault(); handle.setPointerCapture(e.pointerId); document.body.classList.add('resizing');
+    const move = ev => setTutorWidth(right() - ev.clientX);
+    const up = ev => { handle.removeEventListener('pointermove', move); handle.removeEventListener('pointerup', up); document.body.classList.remove('resizing'); store(setTutorWidth(right() - ev.clientX)); };
+    handle.addEventListener('pointermove', move); handle.addEventListener('pointerup', up);
+  });
+  handle.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault(); store(setTutorWidth($('tutor-panel').offsetWidth + (e.key === 'ArrowLeft' ? 24 : -24)));
+  });
+})();
 function setTutor(open) {
   $('tutor-panel').hidden = !open;
   document.querySelector('.workspace').classList.toggle('chat-open', open);

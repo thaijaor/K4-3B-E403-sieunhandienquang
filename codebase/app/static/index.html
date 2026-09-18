@@ -18,7 +18,8 @@
       <footer class="reading-note">Chọn “Hỏi về đoạn này” để Tutor biết bạn đang đọc phần nào.</footer>
     </section>
     <section id="tutor-panel" class="tutor" aria-labelledby="tutor-title" hidden>
-      <header class="tutor-header"><div class="tutor-heading"><span class="spark" aria-hidden="true">✦</span><div><h2 id="tutor-title">Trợ giảng AI</h2><span class="muted small">Cùng bạn hiểu rõ bài đang đọc</span></div><button id="tutor-close" class="icon" aria-label="Đóng trợ giảng">×</button></div><div class="toolbar"><button id="persona-open" class="secondary">Persona</button><button id="new-chat" class="secondary">＋ Chat mới</button><button id="history-open" class="secondary" aria-label="Lịch sử chat">Lịch sử</button><button id="collapse" class="icon" aria-label="Thu gọn trợ giảng" aria-expanded="true">−</button></div></header>
+      <div id="tutor-resizer" class="tutor-resizer" role="separator" aria-orientation="vertical" aria-label="Kéo để đổi độ rộng trợ giảng" tabindex="0"></div>
+      <header class="tutor-header"><h2 id="tutor-title"><span class="spark" aria-hidden="true">✦</span><span class="tutor-name">Trợ giảng AI</span></h2><div class="toolbar"><button id="persona-open" class="secondary">Persona</button><button id="new-chat" class="secondary">＋ Chat mới</button><button id="history-open" class="secondary" aria-label="Lịch sử chat">Lịch sử</button><button id="collapse" class="icon" aria-label="Thu gọn trợ giảng" aria-expanded="true">−</button><button id="tutor-close" class="icon" aria-label="Đóng trợ giảng">×</button></div></header>
       <div id="chat-body" class="chat-body">
         <div class="chat-status">
         <div id="chat-error" class="error" role="alert" hidden></div>
@@ -26,9 +27,8 @@
         <div id="messages" class="messages" role="log" aria-label="Hội thoại" aria-live="polite"></div>
         <form id="composer" class="composer">
           <div id="selection" class="selection" hidden><span id="selection-label"></span><button id="clear-selection" type="button" class="text-button">Bỏ chọn</button></div>
-          <label class="sr-only" for="question">Câu hỏi của bạn</label><textarea id="question" rows="2" maxlength="4000" placeholder="Hỏi bất cứ điều gì…" disabled></textarea>
-          <div class="compose-bottom"><span id="compose-hint" class="muted small">Enter để gửi · Shift + Enter xuống dòng</span><button id="send" class="primary" type="submit" disabled>Gửi ↑</button></div>
-          <p class="disclaimer">AI có thể sai. Hãy mở nguồn để đối chiếu với bài học.</p>
+          <label class="sr-only" for="question">Câu hỏi của bạn</label><textarea id="question" rows="2" maxlength="4000" placeholder="Hỏi về bài đang đọc… (Enter gửi · Shift+Enter xuống dòng)" disabled></textarea>
+          <div class="compose-bottom"><span id="compose-hint" class="muted small">AI có thể sai · mở nguồn để đối chiếu</span><button id="send" class="primary" type="submit" disabled>Gửi ↑</button></div>
         </form>
       </div>
     </section>
