@@ -1,5 +1,7 @@
 import json
 import os
+
+os.environ["AGENT_TRACE_FILE"] = ""  # LLM giả: không ghi vào eval/trace.jsonl
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,7 +12,7 @@ from fastapi.testclient import TestClient
 
 from app import create_app
 from persona.store import DEFAULT_TEXT, PersonaStore, add_item, clear_section, find_item, section_items
-from persona.tools import grounded_in, is_sensitive
+from persona.tools import breaks_rules, grounded_in, is_sensitive
 
 FIXTURES = Path(__file__).parent / "fixtures" / "lessons.json"
 MEMORY = "Tutor nhớ về bạn"
@@ -73,12 +75,17 @@ class GuardTest(unittest.TestCase):
         self.assertTrue(grounded_in("Nền tảng: kế toán, chưa học lập trình", "mình dân kế toán, chưa code bao giờ"))
         self.assertTrue(grounded_in("Độ dài: ngắn gọn", "từ nay trả lời ngắn thôi"))
         self.assertFalse(grounded_in("Nền tảng: kỹ sư phần mềm", "citation là gì?"))
+        self.assertTrue(grounded_in("Nền tảng: non-tech", "giải thích rõ hơn, tôi thuộc nontech"))  # golden A01
 
     def test_sensitive(self):
         self.assertTrue(is_sensitive("Đang stress vì điểm thi"))
         self.assertTrue(is_sensitive("Bệnh: trầm cảm"))
         self.assertFalse(is_sensitive("Nền tảng: kế toán"))
         self.assertFalse(is_sensitive("Mục tiêu: tiến bộ về lượng kiến thức"))
+
+    def test_output_format_is_not_persona(self):  # golden A08
+        self.assertTrue(breaks_rules("Định dạng: JSON mỗi khi trả lời"))
+        self.assertFalse(breaks_rules("Cách giải thích: có ví dụ đời thường"))
 
 
 class StoreTest(unittest.TestCase):

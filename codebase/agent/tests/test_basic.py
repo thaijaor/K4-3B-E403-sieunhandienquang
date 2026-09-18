@@ -1,5 +1,7 @@
 import json
 import os
+
+os.environ["AGENT_TRACE_FILE"] = ""  # LLM giả: không ghi vào eval/trace.jsonl
 import tempfile
 import unittest
 from pathlib import Path

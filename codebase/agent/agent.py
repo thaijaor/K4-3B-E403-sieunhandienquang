@@ -4,6 +4,7 @@ Kết hợp retrieval BM25, quyết định có citation, guard quiz và tool gh
 """
 import json
 import logging
+import os
 import re
 import time
 from pathlib import Path
@@ -17,6 +18,14 @@ LOG = logging.getLogger("agent")
 FALLBACK = "Mình chưa trả lời được lúc này, bạn thử hỏi lại nhé."
 MAX_ROUNDS = 3
 TRACE_FILE = Path(__file__).resolve().parent.parent.parent / "eval" / "trace.jsonl"
+
+
+def _trace_path():
+    """AGENT_TRACE_FILE đổi nơi ghi; đặt rỗng để tắt (unit test dùng LLM giả không ghi vào eval/)."""
+    value = os.environ.get("AGENT_TRACE_FILE")
+    if value is None:
+        return TRACE_FILE
+    return Path(value) if value.strip() else None
 
 QUIZ_PATTERN = re.compile(
     r"\b(đáp án|giải bài tập|bài tập trắc nghiệm|chọn câu|câu \d+ chọn)\b", re.IGNORECASE
@@ -80,8 +89,11 @@ def _parse_llm_response(raw_text: str) -> dict:
 
 def _record_trace(request: RespondRequest, reply: AIReply, duration_ms: float):
     """Ghi vết lượt gọi vào eval/trace.jsonl phục vụ kiểm thử và đo CP3."""
+    path = _trace_path()
+    if path is None:
+        return
     try:
-        TRACE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
         log_entry = {
             "timestamp": time.time(),
             "request_id": request.request_id,
@@ -93,10 +105,11 @@ def _record_trace(request: RespondRequest, reply: AIReply, duration_ms: float):
             "text": reply.text,
             "duration_ms": round(duration_ms, 1),
         }
-        with open(TRACE_FILE, "a", encoding="utf-8") as stream:
+        log_entry["persona_updates"] = [(update.action, update.line) for update in reply.persona_updates]
+        with open(path, "a", encoding="utf-8") as stream:
             stream.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
     except Exception:
-        LOG.warning("Không thể ghi trace log vào %s", TRACE_FILE, exc_info=True)
+        LOG.warning("Không thể ghi trace log vào %s", path, exc_info=True)
 
 
 def respond(

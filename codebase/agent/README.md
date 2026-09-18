@@ -18,7 +18,9 @@ copy codebase\agent\.env.example codebase\agent\.env   # điền OPENAI_API_KEY 
 
 Nối backend: chạy app với `AI_API_URL=http://127.0.0.1:8001` và `PERSONA_API_URL=http://127.0.0.1:8001`.
 
-Test: `cd codebase/agent` rồi `..\..\.venv\Scripts\python.exe -m unittest discover -s tests -v` (dùng LLM giả, không tốn key).
+Test: `cd codebase/agent` rồi `..\..\.venv\Scripts\python.exe -m unittest discover -s tests -v` (dùng LLM giả, không tốn key, không ghi `eval/trace.jsonl`).
+
+Trace: mỗi lượt `/respond` ghi một dòng vào `eval/trace.jsonl` (kể cả `persona_updates`); đổi nơi ghi bằng `AGENT_TRACE_FILE`, đặt rỗng để tắt. Chạy golden set: xem `eval/README.md`.
 
 ## Cấu trúc
 
