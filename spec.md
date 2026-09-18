@@ -6,11 +6,12 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 > Mục ghi *(chưa chốt)* là phần còn thiếu, cần điền trước CP4 (21:00 18/9).
 
 ## §1. User & Job
-- **Job executor + workflow:** học viên K4 đang đọc một bài trên VLearn → gặp điểm chưa hiểu → hỏi Tutor ngay trong bài đang mở → nhận câu trả lời dài, chung cho mọi người → gõ thêm "ngắn gọn thôi" / "dễ hiểu hơn" / "cho ví dụ" → câu sau, chat sau lại phải dặn lại.
+- **Job executor + workflow:** học viên K4 khoá AI20K — gồm cả người đã đi làm IT lẫn người chưa từng lập trình — đang đọc một bài trên VLearn → gặp điểm chưa hiểu → hỏi Tutor ngay trong bài đang mở → nhận câu trả lời dài, chung cho mọi người → gõ thêm "ngắn gọn thôi" / "dễ hiểu hơn" / "cho ví dụ" → câu sau, chat sau lại phải dặn lại.
 - **Core JTBD:** Khi đang đọc bài và gặp chỗ chưa hiểu, tôi muốn được giải thích theo đúng cách mình dễ hiểu mà không phải dặn lại mỗi lần, để hiểu nhanh và học tiếp.
 - **Problem statement:** Khi hỏi để hiểu bài đang mở, học viên phải nhắc đi nhắc lại cách trả lời mình muốn (ngắn gọn, dễ hiểu, có ví dụ); không nhắc thì nhận câu trả lời dài, chung cho mọi người, phải hỏi thêm lượt nữa mới hiểu.
 - **Evidence:**
   - **Nhắc lại kiểu trả lời** (chatlog, regex, cần đọc tay kiểm lại): 43 lượt đòi "ngắn gọn", 37 lượt "dễ hiểu hơn", 92 lượt "chi tiết hơn"; 9–14 học viên lặp lại cùng yêu cầu ≥2 lần. *(chưa chốt: số sau khi đọc tay, mã hội thoại ví dụ)*
+  - **Nhu cầu ngược chiều:** cùng một Tutor, 92 lượt đòi "chi tiết hơn" trong khi 80 lượt đòi "ngắn gọn" / "dễ hiểu hơn" → một độ dài mặc định không vừa cho mọi người. *(chưa chốt: tỉ lệ IT / non-IT từ khảo sát)*
   - **Test Tutor:** 14/16 câu trả lời vượt ngân sách độ dài theo loại câu hỏi. Cách đếm: mở chat mới cho từng câu, đếm số từ, so với ngưỡng 30–180 từ. Ví dụ `V01`, `V02`, `V08`, `V13`.
   - **Chatlog — citation:** 838/2.555 lượt K4 không phải preset có `has_citation = False` (32,8%). Cách đếm: lọc `cohort_hint = K4`, `is_preset = False`, đếm `has_citation != True`. Ví dụ `T10311`, `T11098`. Lý do giữ citation là điều kiện bắt buộc của mọi câu trả lời.
   - **Khảo sát:** form *Khảo sát trải nghiệm VLearn Tutor* có 2 câu về việc phải nhắc lại cách trả lời và nhu cầu được ghi nhớ; ≥11 học viên ngoài nhóm đồng ý dùng thử. *(chưa chốt: n, % xác nhận pain)*
