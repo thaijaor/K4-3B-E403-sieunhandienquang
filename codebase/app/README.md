@@ -2,6 +2,12 @@
 
 Gồm giao diện đọc bài, chat có citation, UI Persona và backend lưu hội thoại. Không triển khai retrieval, prompt/model hay nghiệp vụ Persona; các phần đó do nhóm AI/Persona cung cấp qua contract trong `CONTRACT.md`.
 
+## Bố cục bài học
+
+Sidebar trái có 3 Day, mỗi Day 2 bài Markdown mẫu tự viết trong `mock-lessons/`. Chỉ hỗ trợ H1, H2 có anchor, đoạn văn và danh sách đơn trong demo; không hiển thị Slides/Video. Citation mở đoạn gốc và đánh dấu heading trong bài. Không commit học liệu thật hoặc thư mục `data/`.
+
+Panel AI mặc định ẩn, mở bằng “Đặt câu hỏi với AI” trên header. Đóng panel trả lại chiều ngang cho bài. Có lịch sử hội thoại trong cùng phiên, Chat mới, thu gọn và UI Persona. Trên mobile, sidebar/chat mở phủ vùng đọc và có nút đóng để quay lại bài.
+
 ## Chạy trên Windows
 
 Từ thư mục gốc repo:
@@ -45,6 +51,7 @@ New-Item -ItemType Directory -Force output/playwright | Out-Null
 npx.cmd --yes --package @playwright/cli playwright-cli -s=tutor-app open http://127.0.0.1:8765
 npx.cmd --yes --package @playwright/cli playwright-cli -s=tutor-app run-code --filename codebase/app/tests/browser-check.js
 npx.cmd --yes --package @playwright/cli playwright-cli -s=tutor-app run-code --filename codebase/app/tests/layout-check.js
+npx.cmd --yes --package @playwright/cli playwright-cli -s=tutor-app run-code --filename codebase/app/tests/review-check.js
 ```
 
 Browser check cần preview đang chạy, chỉ xoá cookie/localStorage của browser test. Screenshot lưu tại `output/playwright/`. Bộ test dùng upstream doubles, kiểm chứng UI/BE, không chứng minh chất lượng AI hoặc dịch vụ Persona thật. Starlette hiện phát cảnh báo deprecation khi TestClient dùng httpx; test vẫn chạy.
@@ -52,7 +59,7 @@ Browser check cần preview đang chạy, chỉ xoá cookie/localStorage của b
 ## Hành vi và giới hạn
 
 - Chat lưu bản text/version Persona bất biến lúc tạo. Sửa, xoá memory hoặc undo chỉ ảnh hưởng chat mới; snapshot cũ vẫn còn trong database.
-- Lượt hỏi retry dùng cùng request ID, không nhân đôi; một chat xử lý một lượt tại một thời điểm. Sau restart, lượt chưa xong chuyển sang lỗi để thử lại.
+- Retry giữ ID lượt phía FE, không nhân đôi. Khóa upstream được giữ khi timeout/5xx và đổi sau lỗi contract. Chỉ retry lượt cuối; lượt lỗi cũ có thể gửi thành câu hỏi mới. Một chat xử lý một lượt tại một thời điểm. Sau restart, lượt chưa xong chuyển sang lỗi để thử lại.
 - BE chỉ kiểm tra citation thuộc manifest/locator, không đánh giá phát biểu có được nguồn hỗ trợ hay không.
 - Nội dung AI/Persona render bằng text, không thực thi HTML. Proposal chỉ được chuyển tới API accept khi học viên bấm Lưu.
 - Không có streaming, dashboard, đăng ký tài khoản, upload hay vector DB.

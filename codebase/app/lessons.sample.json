@@ -1,26 +1,50 @@
 [
   {
     "id": "demo-grounding",
+    "day": "Day 01 · Đọc và đặt câu hỏi",
     "title": "Đọc câu trả lời cùng bằng chứng",
-    "subtitle": "Bài mẫu tổng hợp để thử giao diện • Không phải học liệu VLearn",
+    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
     "sample": true,
-    "sources": [
-      {
-        "id": "sample-01",
-        "kind": "slide",
-        "locator": "1",
-        "label": "Bài mẫu · trang 1",
-        "title": "Một câu trả lời có thể kiểm chứng",
-        "text": "Câu trả lời có dẫn nguồn giúp người đọc đối chiếu phát biểu với tài liệu. Một citation cần chỉ đến đúng đoạn hoặc trang chứa bằng chứng. Việc có đường dẫn không tự chứng minh nội dung trả lời là đúng."
-      },
-      {
-        "id": "sample-02",
-        "kind": "transcript",
-        "locator": "sample-segment-02",
-        "label": "Bài mẫu · đoạn 02",
-        "title": "Khi chưa đủ căn cứ",
-        "text": "Nếu chưa rõ người học đang hỏi đoạn nào, trợ giảng cần hỏi lại để xác định ý. Nếu tài liệu đang mở không có căn cứ trả lời, trợ giảng nên nói rõ giới hạn và gợi ý bước tiếp theo."
-      }
-    ]
+    "markdown": "mock-lessons/demo-grounding.md"
+  },
+  {
+    "id": "demo-question",
+    "day": "Day 01 · Đọc và đặt câu hỏi",
+    "title": "Đặt câu hỏi có ngữ cảnh",
+    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
+    "sample": true,
+    "markdown": "mock-lessons/demo-question.md"
+  },
+  {
+    "id": "demo-notes",
+    "day": "Day 02 · Tổ chức kiến thức",
+    "title": "Ghi chú sau khi đọc",
+    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
+    "sample": true,
+    "markdown": "mock-lessons/demo-notes.md"
+  },
+  {
+    "id": "demo-examples",
+    "day": "Day 02 · Tổ chức kiến thức",
+    "title": "Học qua ví dụ",
+    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
+    "sample": true,
+    "markdown": "mock-lessons/demo-examples.md"
+  },
+  {
+    "id": "demo-review",
+    "day": "Day 03 · Tự kiểm tra",
+    "title": "Ôn tập chủ động",
+    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
+    "sample": true,
+    "markdown": "mock-lessons/demo-review.md"
+  },
+  {
+    "id": "demo-dialogue",
+    "day": "Day 03 · Tự kiểm tra",
+    "title": "Trao đổi với trợ giảng",
+    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
+    "sample": true,
+    "markdown": "mock-lessons/demo-dialogue.md"
   }
 ]

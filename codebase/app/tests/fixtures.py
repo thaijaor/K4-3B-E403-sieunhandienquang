@@ -2,6 +2,8 @@
 import copy
 import threading
 import uuid
+from lessons import load_lessons
+from pathlib import Path
 from fastapi import HTTPException
 
 
@@ -11,6 +13,7 @@ class FakeServices:
     is_fixture = True
 
     def __init__(self):
+        self.lessons = {x["id"]: x for x in load_lessons(Path(__file__).parents[1] / "lessons.sample.json")}
         self.calls = []
         self.personas = {}
         self.versions = {}
@@ -37,14 +40,18 @@ class FakeServices:
             if self.reply_override is not None:
                 return copy.deepcopy(self.reply_override)
             text = payload["text"].lower()
-            result = {"decision": "answer", "text": "[Fixture UI] Citation giúp bạn mở đúng nguồn để đối chiếu phát biểu. Đây là phản hồi cố định để thử giao diện, không phải AI.", "citations": [{"source_id": "sample-01", "locator": "1"}], "actions": [], "persona_proposals": []}
+            source = self.lessons[payload["lesson_id"]]["sources"][0]
+            result = {"decision": "answer", "text": "[Fixture UI] Citation giúp bạn mở đúng nguồn để đối chiếu phát biểu. Đây là phản hồi cố định để thử giao diện, không phải AI.", "citations": [{"source_id": source["id"], "locator": source["locator"]}], "actions": [], "persona_proposals": []}
             if "mơ hồ" in text or "giải thích đoạn" in text:
                 result.update(decision="clarify", text="[Fixture UI] Bạn muốn làm rõ phần dẫn nguồn hay phần thiếu căn cứ?", citations=[], actions=[{"type": "send_message", "label": "Phần dẫn nguồn", "value": "Citation là gì?"}])
             if "quiz" in text or "ngoài bài" in text:
                 result.update(decision="abstain", text="[Fixture UI] Mình chưa thể trả lời yêu cầu này. Bạn có thể xem lại bài mẫu.", citations=[])
             if "ghi nhớ" in text:
                 current = self.current(owner)
-                proposal = {"id": str(uuid.uuid4()), "base_version": current["version"], "before": current["text"], "after": current["text"] + "\n- Ưu tiên ví dụ dễ hiểu (fixture)"}
+                before = current["text"]
+                if "## Tutor nhớ về bạn\n" not in before:
+                    before += "\n\n## Tutor nhớ về bạn\n"
+                proposal = {"id": str(uuid.uuid4()), "base_version": current["version"], "before": current["text"], "after": before.replace("## Tutor nhớ về bạn\n", "## Tutor nhớ về bạn\n- Ưu tiên ví dụ dễ hiểu (fixture)\n", 1)}
                 self.proposals[proposal["id"]] = (owner, proposal)
                 result["persona_proposals"] = [proposal]
             return result

@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-const state = {chat: null, lesson: null, selected: [], busy: new Set(), creating: false, generation: 0, persona: null, editing: false, saving: false, undo: null, capabilities: null};
+const state = {chat: null, lesson: null, selected: [], busy: new Set(), creating: false, generation: 0, persona: null, editing: false, saving: false, undo: null, capabilities: null, navigating: false};
 
 function node(tag, text, className) {
   const el = document.createElement(tag);
@@ -31,12 +31,12 @@ async function api(path, method = 'GET', body) {
 }
 function controls() {
   const pending = state.chat?.messages.some(m => m.role === 'user' && m.status === 'pending');
-  const busy = state.creating || state.busy.has(state.chat?.id) || pending;
-  $('question').disabled = !state.chat || state.creating;
+  const busy = state.creating || state.navigating || state.busy.has(state.chat?.id) || pending;
+  $('question').disabled = !state.chat || state.creating || state.navigating;
   $('send').disabled = !state.chat || busy || !$('question').value.trim();
-  $('new-chat').disabled = state.creating || !state.lesson;
-  $('banner-new').disabled = state.creating || !state.lesson;
-  $('lesson-select').disabled = state.creating;
+  $('new-chat').disabled = state.creating || state.navigating || !state.lesson;
+  $('banner-new').disabled = state.creating || state.navigating || !state.lesson;
+  document.querySelectorAll('[data-lesson]').forEach(el => el.disabled = state.creating || state.navigating);
   $('compose-hint').textContent = busy ? 'Đang xử lý câu hỏi…' : 'Enter để gửi · Shift + Enter xuống dòng';
 }
 function version() {
@@ -54,18 +54,29 @@ function version() {
 async function loadLesson(id) {
   const lesson = await api(`/lessons/${encodeURIComponent(id)}`);
   state.lesson = lesson; state.selected = [];
-  $('lesson-select').value = id;
+  document.querySelectorAll('[data-lesson]').forEach(el => {
+    const active = el.dataset.lesson === id;
+    el.classList.toggle('active', active);
+    if (active) {el.setAttribute('aria-current', 'page'); el.closest('details').open = true;}
+    else el.removeAttribute('aria-current');
+    el.querySelector('.learning-label').hidden = !active;
+  });
   $('lesson-title').textContent = lesson.title;
   $('lesson-subtitle').textContent = lesson.subtitle;
   $('lesson-sources').replaceChildren();
   for (const source of lesson.sources) {
-    const card = node('article', undefined, 'source-card'); card.dataset.source = source.id;
-    card.append(node('div', source.label, 'eyebrow'), node('h2', source.title), node('p', source.text));
+    const card = node('article', undefined, 'source-card'); card.dataset.source = source.id; card.id = source.anchor; card.tabIndex = -1;
+    card.append(node('h2', source.title));
+    for (const block of source.text.split(/\n\s*\n/)) {
+      if (block.split('\n').every(line => line.startsWith('- '))) {
+        const list = node('ul'); block.split('\n').forEach(line => list.append(node('li', line.slice(2)))); card.append(list);
+      } else card.append(node('p', block));
+    }
     const footer = node('div', undefined, 'card-footer');
-    footer.append(node('span', source.kind === 'slide' ? 'Tài liệu bài học' : 'Nội dung bài giảng', 'small muted'), button('Hỏi về đoạn này', () => {
-      state.selected = [source.id]; selection(); $('question').focus();
+    footer.append(node('span', 'Markdown · Bài mẫu', 'small muted'), button('Hỏi về đoạn này', () => {
+      setTutor(true); state.selected = [source.id]; selection(); $('question').focus();
       if (!$('question').value.trim()) $('question').value = 'Giải thích đoạn này'; controls();
-      if (matchMedia('(max-width:720px)').matches) $('tutor-panel').scrollIntoView({behavior: 'smooth'});
+
     })); card.append(footer); $('lesson-sources').append(card);
   }
   selection();
@@ -100,13 +111,18 @@ async function openSource(sourceId, chatId = state.chat?.id) {
   if (!dialog.open) dialog.showModal();
   try {
     const source = await api(`/sources/${encodeURIComponent(sourceId)}?chat_id=${encodeURIComponent(chatId)}`);
+    const section = document.getElementById(source.anchor);
+    if (section) {
+      document.querySelectorAll('.citation-target').forEach(el => el.classList.remove('citation-target'));
+      section.classList.add('citation-target'); section.scrollIntoView({block: 'center'});
+    }
     $('source-title').textContent = source.title; $('source-label').textContent = source.label; $('source-text').textContent = source.text;
   } catch (e) { $('source-title').textContent = 'Không mở được nguồn'; $('source-text').textContent = e.message; }
 }
 function renderMessages() {
   const root = $('messages'); root.replaceChildren();
   if (!state.chat?.messages.length) {
-    const empty = node('div', undefined, 'empty'); empty.append(node('span', '✦', 'spark'), node('h3', 'Mình cùng hiểu bài nhé'), node('p', 'Hỏi về nội dung đang đọc. Mở nguồn để kiểm chứng câu trả lời.'));
+    const empty = node('div', undefined, 'empty'); empty.append(node('span', '✦', 'spark'), node('h3', 'Mình cùng hiểu bài nhé'), node('p', `Đang mở: ${state.lesson?.title || ''}`), node('p', 'Hỏi về nội dung đang đọc. Mở nguồn để kiểm chứng câu trả lời.'));
     const suggestions = node('div', undefined, 'suggestions');
     for (const text of ['Tóm tắt ý chính', 'Giải thích đoạn này']) suggestions.append(button(text, () => { $('question').value = text; controls(); $('question').focus(); }));
     empty.append(suggestions); root.append(empty); return;
@@ -118,7 +134,8 @@ function renderMessages() {
     if (m.status === 'pending') bubble.append(node('span', 'Đang chờ Tutor…', 'small muted'));
     if (m.status === 'failed') {
       bubble.append(node('div', m.error || 'Lượt hỏi chưa hoàn thành.', 'small'));
-      bubble.append(button('Thử lại câu hỏi này', () => send(m.request)));
+      if (m.retryable !== false) bubble.append(button('Thử lại câu hỏi này', () => send(m.request)));
+      else bubble.append(button('Gửi thành câu hỏi mới', () => sendText(m.text)));
     }
     if (m.citations?.length) {
       const citations = node('div', undefined, 'citations');
@@ -142,7 +159,7 @@ function renderMessages() {
 }
 async function sendText(text) { $('question').value = text; controls(); await send(); }
 async function send(retry) {
-  if (!state.chat || state.creating || state.busy.has(state.chat.id) || state.chat.messages.some(m => m.status === 'pending')) return;
+  if (!state.chat || state.creating || state.navigating || state.busy.has(state.chat.id) || state.chat.messages.some(m => m.status === 'pending')) return;
   const chatId = state.chat.id;
   const question = retry || {text: $('question').value.trim(), client_request_id: crypto.randomUUID(), selected_source_ids: [...state.selected]};
   if (!question.text) return;
@@ -252,12 +269,75 @@ $('question').addEventListener('keydown', e => {if (e.key === 'Enter' && !e.shif
 $('new-chat').addEventListener('click', () => newChat()); $('banner-new').addEventListener('click', () => newChat());
 $('without-persona').addEventListener('click', () => newChat(true));
 $('clear-selection').addEventListener('click', () => {state.selected = []; selection();});
-$('lesson-select').addEventListener('change', async e => {
-  const previous = state.lesson.id; const chosen = e.target.value;
-  if ($('question').value.trim() && !confirm('Chuyển bài sẽ tạo chat mới và bỏ câu hỏi chưa gửi. Tiếp tục?')) {e.target.value = previous; return;}
-  // Clear the previous chat so a failure cannot send a question to a different lesson.
-  state.chat = null; ++state.generation; controls();
-  try {await loadLesson(chosen); await newChat();} catch (err) {error('chat-error', err.message);}
+function setTutor(open) {
+  $('tutor-panel').hidden = !open;
+  document.querySelector('.workspace').classList.toggle('chat-open', open);
+  $('tutor-toggle').setAttribute('aria-expanded', String(open));
+  if (open) {
+    $('chat-body').hidden = false;
+    $('collapse').textContent = '−';
+    $('collapse').setAttribute('aria-expanded', 'true');
+    $('collapse').setAttribute('aria-label', 'Thu gọn trợ giảng');
+    if (matchMedia('(max-width:720px)').matches) setSidebar(false);
+  }
+}
+function setSidebar(open) {
+  $('lesson-sidebar').hidden = !open;
+  document.querySelector('.workspace').classList.toggle('sidebar-hidden', !open);
+  $('sidebar-open').setAttribute('aria-expanded', String(open));
+}
+async function switchLesson(id) {
+  if (state.creating || state.navigating || id === state.lesson?.id) return;
+  if ($('question').value.trim() && !confirm('Chuyển bài sẽ tạo chat mới và bỏ câu hỏi chưa gửi. Tiếp tục?')) return;
+  state.navigating = true; state.chat = null; ++state.generation; controls();
+  try {await loadLesson(id); await newChat();}
+  catch (e) {error('chat-error', e.message); setTutor(true);}
+  finally {state.navigating = false; controls();}
+  if (matchMedia('(max-width:720px)').matches) setSidebar(false);
+}
+function lessonNavigation(lessons) {
+  const days = new Map();
+  for (const lesson of lessons) {
+    if (!days.has(lesson.day)) {
+      const group = node('details'); group.append(node('summary', lesson.day));
+      days.set(lesson.day, group); $('lesson-nav').append(group);
+    }
+    const item = button('', () => switchLesson(lesson.id), 'lesson-link');
+    item.dataset.lesson = lesson.id;
+    item.append(node('span', lesson.title), node('span', 'Đang học', 'learning-label'));
+    item.querySelector('.learning-label').hidden = true;
+    days.get(lesson.day).append(item);
+  }
+}
+$('tutor-toggle').addEventListener('click', () => setTutor($('tutor-panel').hidden));
+$('tutor-close').addEventListener('click', () => {setTutor(false); $('tutor-toggle').focus();});
+$('sidebar-close').addEventListener('click', () => {setSidebar(false); $('sidebar-open').focus();});
+$('sidebar-open').addEventListener('click', () => {setSidebar($('lesson-sidebar').hidden); if (matchMedia('(max-width:720px)').matches) setTutor(false);});
+$('history-close').addEventListener('click', () => $('history-dialog').close());
+$('history-open').addEventListener('click', async () => {
+  $('history-dialog').showModal(); $('history-list').replaceChildren(node('p', 'Đang tải…'));
+  try {
+    const chats = await api('/chats'); $('history-list').replaceChildren();
+    if (!chats.length) $('history-list').append(node('p', 'Chưa có hội thoại.'));
+    for (const chat of chats) {
+      const item = button('', async () => {
+        if (state.creating || state.navigating) return;
+        if ($('question').value.trim() && !confirm('Bỏ câu hỏi chưa gửi để mở hội thoại này?')) return;
+        state.navigating = true; controls();
+        try {
+          const restored = await api(`/chats/${encodeURIComponent(chat.id)}`);
+          await loadLesson(restored.lesson_id); state.chat = restored; ++state.generation;
+          localStorage.setItem('tutor.chat', restored.id); $('question').value = '';
+          error('chat-error'); $('without-persona').hidden = true;
+          renderMessages(); version(); $('history-dialog').close(); setTutor(true);
+        } catch (e) {item.append(node('p', e.message, 'error'));}
+        finally {state.navigating = false; controls();}
+      }, 'history-item');
+      item.append(node('strong', chat.title), node('span', new Date(chat.created_at * 1000).toLocaleString('vi-VN'), 'small muted'));
+      if (chat.id === state.chat?.id) item.append(node('span', 'Đang mở', 'learning-label'));
+      $('history-list').append(item);
+    }
+  } catch (e) {$('history-list').replaceChildren(node('p', e.message, 'error'));}
 });
 $('collapse').addEventListener('click', () => {const hidden = !$('chat-body').hidden; $('chat-body').hidden = hidden; $('collapse').textContent = hidden ? '+' : '−'; $('collapse').setAttribute('aria-expanded', String(!hidden)); $('collapse').setAttribute('aria-label', hidden ? 'Mở trợ giảng' : 'Thu gọn trợ giảng');});
 $('persona-open').addEventListener('click', async () => {$('persona-dialog').showModal(); await loadPersona();});
@@ -286,7 +366,8 @@ async function start() {
     $('connection').textContent = parts.join(' · ');
     const lessons = await api('/lessons');
     if (!lessons.length) throw new Error('Chưa có bài học. Cần cấu hình danh mục nguồn.');
-    for (const lesson of lessons) { const option = node('option', lesson.title); option.value = lesson.id; $('lesson-select').append(option); }
+    lessonNavigation(lessons);
+    if (matchMedia('(max-width:720px)').matches) setSidebar(false);
     const saved = localStorage.getItem('tutor.chat');
     if (saved) {
       try { state.chat = await api(`/chats/${encodeURIComponent(saved)}`); }
