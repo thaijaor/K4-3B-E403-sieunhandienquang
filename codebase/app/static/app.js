@@ -237,25 +237,31 @@ $('new-chat').addEventListener('click', () => newChat());
 $('clear-selection').addEventListener('click', () => {state.selected = []; selection();});
 // Panel width: drag the left edge (or arrow keys on it); remembered per browser.
 const TUTOR_MIN = 320, LESSON_MIN = 360;
+let tutorWidth = null;  // learner's chosen width; clamped against the layout each time the panel opens
 function setTutorWidth(px) {
   const ws = document.querySelector('.workspace');
-  const max = Math.max(TUTOR_MIN, ws.clientWidth - LESSON_MIN - (ws.classList.contains('sidebar-hidden') ? 0 : 240));
+  const side = $('lesson-sidebar'); const inGrid = !side.hidden && getComputedStyle(side).position !== 'absolute';
+  const max = Math.max(TUTOR_MIN, ws.clientWidth - LESSON_MIN - (inGrid ? side.offsetWidth : 0));
   const width = Math.round(Math.min(max, Math.max(TUTOR_MIN, px)));
-  ws.style.setProperty('--tutor-w', `${width}px`);
+  ws.style.setProperty('--tutor-w', `${width}px`); ws.classList.add('tutor-sized');
   $('tutor-resizer').setAttribute('aria-valuenow', String(width));
   return width;
 }
 (() => {
   const handle = $('tutor-resizer'); let saved = null;
   try { saved = Number(localStorage.getItem('tutor.width')) || null; } catch {}
-  if (saved) setTutorWidth(saved);
-  const store = (w) => { try { localStorage.setItem('tutor.width', String(w)); } catch {} };
+  tutorWidth = saved;
+  const store = (w) => { tutorWidth = w; try { localStorage.setItem('tutor.width', String(w)); } catch {} };
   const right = () => $('tutor-panel').getBoundingClientRect().right;
   handle.addEventListener('pointerdown', e => {
     e.preventDefault(); handle.setPointerCapture(e.pointerId); document.body.classList.add('resizing');
     const move = ev => setTutorWidth(right() - ev.clientX);
     const up = ev => { handle.removeEventListener('pointermove', move); handle.removeEventListener('pointerup', up); document.body.classList.remove('resizing'); store(setTutorWidth(right() - ev.clientX)); };
     handle.addEventListener('pointermove', move); handle.addEventListener('pointerup', up);
+  });
+  handle.addEventListener('dblclick', () => {
+    const ws = document.querySelector('.workspace'); ws.classList.remove('tutor-sized'); ws.style.removeProperty('--tutor-w');
+    tutorWidth = null; try { localStorage.removeItem('tutor.width'); } catch {}
   });
   handle.addEventListener('keydown', e => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
@@ -265,6 +271,7 @@ function setTutorWidth(px) {
 function setTutor(open) {
   $('tutor-panel').hidden = !open;
   document.querySelector('.workspace').classList.toggle('chat-open', open);
+  if (open && tutorWidth) setTutorWidth(tutorWidth);
   $('tutor-toggle').setAttribute('aria-expanded', String(open));
   if (open) {
     $('chat-body').hidden = false;
