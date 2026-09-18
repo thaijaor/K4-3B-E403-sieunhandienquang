@@ -1,0 +1,50 @@
+[
+  {
+    "id": "demo-grounding",
+    "day": "Day 01 · Đọc và đặt câu hỏi",
+    "title": "Đọc câu trả lời cùng bằng chứng",
+    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
+    "sample": true,
+    "markdown": "mock-lessons/demo-grounding.md"
+  },
+  {
+    "id": "demo-question",
+    "day": "Day 01 · Đọc và đặt câu hỏi",
+    "title": "Đặt câu hỏi có ngữ cảnh",
+    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
+    "sample": true,
+    "markdown": "mock-lessons/demo-question.md"
+  },
+  {
+    "id": "demo-notes",
+    "day": "Day 02 · Tổ chức kiến thức",
+    "title": "Ghi chú sau khi đọc",
+    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
+    "sample": true,
+    "markdown": "mock-lessons/demo-notes.md"
+  },
+  {
+    "id": "demo-examples",
+    "day": "Day 02 · Tổ chức kiến thức",
+    "title": "Học qua ví dụ",
+    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
+    "sample": true,
+    "markdown": "mock-lessons/demo-examples.md"
+  },
+  {
+    "id": "demo-review",
+    "day": "Day 03 · Tự kiểm tra",
+    "title": "Ôn tập chủ động",
+    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
+    "sample": true,
+    "markdown": "mock-lessons/demo-review.md"
+  },
+  {
+    "id": "demo-dialogue",
+    "day": "Day 03 · Tự kiểm tra",
+    "title": "Trao đổi với trợ giảng",
+    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
+    "sample": true,
+    "markdown": "mock-lessons/demo-dialogue.md"
+  }
+]
