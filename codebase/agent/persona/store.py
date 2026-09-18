@@ -7,17 +7,15 @@ from contextlib import contextmanager
 from pathlib import Path
 
 MAX_CHARS = 2000
-TUTOR_SECTIONS = ("Tính cách Tutor", "Tutor nhớ về bạn")  # "Không được nhớ" chỉ học viên sửa
+TUTOR_SECTIONS = ("Tính cách Tutor", "Tutor nhớ về bạn")
 MEMORY_SECTION = "Tutor nhớ về bạn"
-FORBIDDEN_SECTION = "Không được nhớ"
+DONT_REMEMBER = "Đừng nhớ"  # dòng `- Đừng nhớ: X` trong MEMORY_SECTION: Tutor không đề xuất ghi nhớ điều chứa X
 DEFAULT_TEXT = """# PERSONA — Tutor của tôi
 
 ## Tính cách Tutor
 - Xưng hô: mình – bạn
 
 ## Tutor nhớ về bạn
-
-## Không được nhớ
 """
 
 
@@ -41,6 +39,13 @@ def section_items(text, section):
     return [line[2:].strip() for line in text[span[0]:span[1]].splitlines() if line.startswith("- ")]
 
 
+def dont_remember_rules(text):
+    """Các X trong dòng `- Đừng nhớ: X` của MEMORY_SECTION."""
+    prefix = DONT_REMEMBER.lower() + ":"
+    return [item.split(":", 1)[1].strip() for item in section_items(text, MEMORY_SECTION)
+            if item.lower().startswith(prefix) and item.split(":", 1)[1].strip()]
+
+
 def add_item(text, section, item):
     """Thêm `- item` vào cuối mục. Dòng dạng `Khoá: giá trị` thay dòng cùng khoá thay vì thêm trùng."""
     item = " ".join(item.split())
@@ -49,6 +54,8 @@ def add_item(text, section, item):
         return text.rstrip("\n") + f"\n\n## {section}\n- {item}\n"
     lines = text[span[0]:span[1]].strip("\n").splitlines()
     key = item.split(":", 1)[0].strip().lower() if ":" in item else None
+    if key == DONT_REMEMBER.lower():  # được phép có nhiều dòng `Đừng nhớ: …`
+        key = None
     for index, line in enumerate(lines):
         if not line.startswith("- "):
             continue
@@ -122,13 +129,14 @@ class PersonaStore:
             return self._write(db, learner, clear_section(self._current(db, learner)[0], MEMORY_SECTION))
 
     def propose(self, learner, section, item):
-        """Tạo đề xuất pending. Trả None nếu không có gì để đổi hoặc học viên đã cấm nhớ điều này."""
+        """Tạo đề xuất pending. Trả None nếu không có gì để đổi hoặc học viên đã ghi `Đừng nhớ` điều này."""
         item = " ".join(str(item).split())
         if section not in TUTOR_SECTIONS or not item:
             raise PersonaError(f"section phải là một trong {TUTOR_SECTIONS}.")
         with self._db() as db:
             before = self._current(db, learner)[0]
-            if any(rule and rule.lower() in item.lower() for rule in section_items(before, FORBIDDEN_SECTION)):
+            is_rule = item.lower().startswith(DONT_REMEMBER.lower() + ":")
+            if not is_rule and any(rule.lower() in item.lower() for rule in dont_remember_rules(before)):
                 return None
             after = add_item(before, section, item)
             if after == before or len(after) > MAX_CHARS:

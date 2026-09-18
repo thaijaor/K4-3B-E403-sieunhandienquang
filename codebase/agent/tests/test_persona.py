@@ -36,7 +36,7 @@ class TextEditTest(unittest.TestCase):
         after = add_item(DEFAULT_TEXT, "Tutor nhớ về bạn", "Chưa quen lập trình")
         self.assertEqual(section_items(after, "Tutor nhớ về bạn"), ["Chưa quen lập trình"])
         self.assertEqual(section_items(after, "Tính cách Tutor"), ["Xưng hô: mình – bạn"])
-        self.assertIn("## Không được nhớ", after)
+        self.assertNotIn("## Không được nhớ", after)
 
     def test_key_value_item_replaces_same_key(self):
         after = add_item(DEFAULT_TEXT, "Tính cách Tutor", "Xưng hô: anh – em")
@@ -79,9 +79,16 @@ class StoreTest(unittest.TestCase):
         self.assertEqual(self.store.get("a")["text"], DEFAULT_TEXT)
         self.assertEqual(self.store.accept("a", proposal["id"])["text"], DEFAULT_TEXT)
 
-    def test_forbidden_topic_is_not_proposed(self):
-        self.store.save("a", add_item(DEFAULT_TEXT, "Không được nhớ", "điểm số"))
+    def test_dont_remember_topic_is_not_proposed(self):
+        self.store.save("a", add_item(DEFAULT_TEXT, "Tutor nhớ về bạn", "Đừng nhớ: điểm số"))
         self.assertIsNone(self.store.propose("a", "Tutor nhớ về bạn", "Lo lắng về điểm số"))
+        self.assertIsNotNone(self.store.propose("a", "Tutor nhớ về bạn", "Thích ví dụ"))
+
+    def test_dont_remember_lines_do_not_replace_each_other(self):
+        self.store.save("a", add_item(DEFAULT_TEXT, "Tutor nhớ về bạn", "Đừng nhớ: điểm số"))
+        proposal = self.store.propose("a", "Tutor nhớ về bạn", "Đừng nhớ: giờ học")
+        items = section_items(self.store.accept("a", proposal["id"])["text"], "Tutor nhớ về bạn")
+        self.assertEqual(items, ["Đừng nhớ: điểm số", "Đừng nhớ: giờ học"])
 
     def test_owner_isolation(self):
         proposal = self.store.propose("a", "Tutor nhớ về bạn", "Thích ví dụ")

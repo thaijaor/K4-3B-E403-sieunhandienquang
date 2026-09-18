@@ -88,9 +88,9 @@ guard (code) ──▶ JSON về BE          tối đa 2 lần search, 3 vòng L
 
 ### Persona
 
-- Nằm trong agent. Nội dung là markdown ≤2.000 ký tự, 3 mục: *Tính cách Tutor* · *Tutor nhớ về bạn* · *Không được nhớ* (spec §4).
+- Nằm trong agent. Nội dung là markdown ≤2.000 ký tự, 2 mục: *Tính cách Tutor* · *Tutor nhớ về bạn* (spec §4).
 - Đưa vào prompt trong khối `<persona>`, chỉ điều chỉnh cách trình bày (độ dài, xưng hô, ví dụ); luật cố định luôn thắng.
-- Tutor chỉ **đề xuất** ghi nhớ; học viên bấm Lưu mới ghi. Tutor chỉ đề xuất vào *Tính cách Tutor* hoặc *Tutor nhớ về bạn*; điều trùng với *Không được nhớ* bị bỏ qua.
+- Tutor chỉ **đề xuất** ghi nhớ; học viên bấm Lưu mới ghi. Điều học viên không muốn Tutor nhớ ghi thành dòng `Đừng nhớ: X` trong *Tutor nhớ về bạn* (tự gõ hoặc nhờ Tutor đề xuất); Tutor không đề xuất ghi nhớ điều chứa X.
 - **Không version, không hoàn tác, không snapshot theo chat.** Agent đọc Persona hiện tại theo `X-Learner-ID` mỗi lượt, nên sửa Persona áp dụng ngay câu hỏi tiếp theo.
 - Bấm Lưu một đề xuất = áp dòng đó vào Persona **hiện tại** (không ghi đè bằng bản `after` cũ), nên học viên sửa tay giữa chừng không bị mất.
 - Dòng dạng `Khoá: giá trị` (vd `Độ dài: ngắn gọn`) thay dòng cùng khoá thay vì thêm trùng.

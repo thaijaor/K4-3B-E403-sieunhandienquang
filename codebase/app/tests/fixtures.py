@@ -24,7 +24,7 @@ class FakeServices:
 
     def current(self, owner):
         if owner not in self.personas:
-            self.personas[owner] = {"text": "# PERSONA — Tutor của tôi\n\n## Tính cách Tutor\n- Xưng hô: mình – bạn\n\n## Tutor nhớ về bạn\n\n## Không được nhớ\n", "updated_at": "Fixture UI"}
+            self.personas[owner] = {"text": "# PERSONA — Tutor của tôi\n\n## Tính cách Tutor\n- Xưng hô: mình – bạn\n\n## Tutor nhớ về bạn\n", "updated_at": "Fixture UI"}
         return self.personas[owner]
 
     def request(self, kind, method, path, owner, payload=None, request_id=None):
@@ -64,7 +64,7 @@ class FakeServices:
                 raise HTTPException(404, "Proposal not found")
             text = payload.get("edited_text") if payload.get("edited_text") is not None else proposal["after"]
         elif path.endswith("/memory"):
-            text = "# PERSONA — Tutor của tôi\n\n## Tính cách Tutor\n- Xưng hô: mình – bạn\n\n## Tutor nhớ về bạn\n\n## Không được nhớ\n"
+            text = "# PERSONA — Tutor của tôi\n\n## Tính cách Tutor\n- Xưng hô: mình – bạn\n\n## Tutor nhớ về bạn\n"
         else:
             text = payload["text"]
         self.personas[owner] = {"text": text, "updated_at": "Fixture UI"}

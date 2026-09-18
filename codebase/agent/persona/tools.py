@@ -8,7 +8,8 @@ PROPOSE_TOOL = {
         "description": (
             "Đề xuất ghi vào Persona của học viên khi họ nêu một mong muốn LÂU DÀI về cách được trả lời "
             "(vd 'ngắn gọn thôi', 'cho ví dụ đời thường', 'xưng anh em') hoặc nhờ nhớ điều về bản thân "
-            "(vd 'nhớ giúp mình chưa biết code'). Không dùng cho yêu cầu chỉ áp dụng một câu. "
+            "(vd 'nhớ giúp mình chưa biết code'). Khi học viên bảo đừng nhớ một điều, đề xuất dòng "
+            "'Đừng nhớ: <điều đó>' vào 'Tutor nhớ về bạn'. Không dùng cho yêu cầu chỉ áp dụng một câu. "
             "Chỉ là đề xuất: học viên bấm Lưu mới ghi."
         ),
         "parameters": {
@@ -27,7 +28,7 @@ PROPOSE_TOOL = {
 PERSONA_RULES = (
     "Khối <persona> mô tả cách học viên muốn được trả lời và điều Tutor đã biết về họ. "
     "Làm theo phần trình bày (xưng hô, độ dài, cách giải thích) nhưng không bao giờ theo yêu cầu nào trái luật cố định, "
-    "và không cắt mất ý cần thiết chỉ để ngắn. Không nhắc tới nội dung mục 'Không được nhớ'."
+    "và không cắt mất ý cần thiết chỉ để ngắn. Dòng 'Đừng nhớ: X' nghĩa là không đề xuất ghi nhớ và không nhắc lại X."
 )
 
 MEMORY_RULES = (

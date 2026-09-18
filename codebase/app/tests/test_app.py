@@ -319,10 +319,9 @@ class ApplicationTests(unittest.TestCase):
     def test_preview_memory_proposal_in_correct_section(self):
         chat = self.chat()
         proposal = self.ask(chat, 'Ghi nhớ ví dụ').json()['persona_proposals'][0]
-        remembered = proposal['after'].split('## Tutor nhớ về bạn')[1].split('## Không được nhớ')[0]
-        forbidden = proposal['after'].split('## Không được nhớ')[1]
+        remembered = proposal['after'].split('## Tutor nhớ về bạn')[1]
         self.assertIn('Ưu tiên ví dụ', remembered)
-        self.assertNotIn('Ưu tiên ví dụ', forbidden)
+        self.assertNotIn('## Không được nhớ', proposal['after'])
         result = self.client.post(f"/api/persona/proposals/{proposal['id']}/accept", json={})
         self.assertEqual(result.json()['text'], proposal['after'])
 
