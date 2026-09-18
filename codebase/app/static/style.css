@@ -71,20 +71,10 @@ textarea::placeholder{color:#8194a3}
 .notice{background:#eff7ee;color:#476b49;font-size:12px;padding:10px 18px}
 .selection{font-size:12px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
 .fallback{margin:4px 16px 10px}
-.proposal{background:#f7f9fc;border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:12px}
-.proposal h3{font-size:13px;margin-bottom:2px}
-.diff-summary{font-size:11px!important;color:var(--muted);margin:0 0 8px}
-.diff-view{border:1px solid #d8e2ea;border-radius:8px;overflow:hidden;background:#fff;margin-bottom:12px;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
-.diff-row{display:grid;grid-template-columns:24px minmax(0,1fr);min-height:24px;align-items:start}
-.diff-row+.diff-row{border-top:1px solid #edf1f4}
-.diff-mark{height:100%;text-align:center;user-select:none;color:#8493a0;background:#f3f6f8;font-weight:700}
-.diff-text{white-space:pre-wrap;overflow-wrap:anywhere;padding:3px 7px}
-.diff-add{background:#edf8f0;color:#215d31}.diff-add .diff-mark{background:#d9f0df;color:#26713a}
-.diff-remove{background:#fff0ee;color:#873a31}.diff-remove .diff-mark{background:#f8ddd9;color:#a24539}
-.diff-same{color:#536775}.diff-same .diff-text{font-weight:600}
-.diff-skip{display:block;text-align:center;color:#8795a0;background:#f7f9fa;padding:1px 0}
-.proposal textarea{font-size:12px}
-.proposal-status{font-size:12px;color:#536c7d}
+.memory-note{display:flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:12px;color:#536c7d;background:#f7f9fc;border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin-top:10px}
+.memory-note.undone{opacity:.7}.memory-note.undone span:nth-child(2){text-decoration:line-through}
+.memory-note button.link{background:none;border:0;padding:0;color:var(--blue,#134d8b);font-weight:600;cursor:pointer;text-decoration:underline}
+.memory-status{color:#8493a0}
 .drawer{margin:0 0 0 auto;overflow:hidden;height:100dvh;max-height:100dvh;width:min(510px,100%);max-width:100%;border:0;border-left:1px solid var(--line);padding:0;box-shadow:-12px 0 45px #172e5420;color:#233c51}
 .drawer::backdrop,.source-dialog::backdrop{background:#152c4566}
 .dialog-header{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:20px}

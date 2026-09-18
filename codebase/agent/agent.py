@@ -1,6 +1,6 @@
 """Xử lý một lượt /respond cho Agent Service.
 
-Kết hợp retrieval BM25, quyết định có citation, guard quiz và tool đề xuất Persona.
+Kết hợp retrieval BM25, quyết định có citation, guard quiz và tool ghi nhớ / quên Persona.
 """
 import json
 import logging
@@ -8,7 +8,7 @@ import re
 import time
 from pathlib import Path
 
-from persona.tools import PROPOSE_TOOL, run_propose
+from persona.tools import FORGET_TOOL, REMEMBER_TOOL, run_forget, run_remember
 from prompt import build_messages
 from retrieval import search_sources
 from schemas import Action, AIReply, Citation, RespondRequest
@@ -120,17 +120,20 @@ def respond(
         relevant_sources=relevant_sources,
         persona=persona,
     )
-    proposals = []
+    updates = []
     tools = {}
 
     if persona is not None:
-        def propose(arguments):
-            result, proposal = run_propose(persona_store, learner, arguments)
-            if proposal:
-                proposals.append(proposal)
-            return result
+        def tracked(run):
+            def handler(arguments):
+                result, update = run(arguments)
+                if update:
+                    updates.append(update)
+                return result
+            return handler
 
-        tools["propose_persona_memory"] = (PROPOSE_TOOL, propose)
+        tools["remember"] = (REMEMBER_TOOL, tracked(lambda args: run_remember(persona_store, learner, args, request.text)))
+        tools["forget"] = (FORGET_TOOL, tracked(lambda args: run_forget(persona_store, learner, args)))
 
     message = None
     for _ in range(MAX_ROUNDS):
@@ -156,7 +159,8 @@ def respond(
                     "content": json.dumps(result, ensure_ascii=False),
                 }
             )
-        tools.pop("propose_persona_memory", None)
+        tools.pop("remember", None)  # Persona chỉ đổi ở vòng đầu của mỗi lượt
+        tools.pop("forget", None)
 
     raw_content = (
         (message.content or "").strip()
@@ -225,7 +229,7 @@ def respond(
         text=text,
         citations=citations,
         actions=actions,
-        persona_proposals=proposals[:4],
+        persona_updates=updates[:4],
     )
     _record_trace(request, reply, (time.monotonic() - start_time) * 1000)
     return reply

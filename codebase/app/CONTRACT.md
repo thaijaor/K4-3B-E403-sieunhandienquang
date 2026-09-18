@@ -6,11 +6,11 @@
 
 BE gửi `X-Learner-ID` lấy từ session phía server, không lấy learner ID từ browser. Nếu cấu hình key, gửi `Authorization: Bearer ...`. Upstream chỉ được tin header danh tính từ BE đã xác thực, không mở công khai cho client tự khai owner.
 
-Timeout 30 giây; không follow redirect; lỗi kỹ thuật là 502/503/504, khác quyết định `abstain`. Persona service phải kiểm tra owner và trạng thái proposal nguyên tử. Accept/reject phải idempotent để chịu lỗi mạng hoặc crash giữa upstream và database ứng dụng.
+Timeout 30 giây; không follow redirect; lỗi kỹ thuật là 502/503/504, khác quyết định `abstain`. Persona service phải kiểm tra owner của mỗi thay đổi. Undo phải idempotent để chịu lỗi mạng hoặc crash giữa upstream và database ứng dụng.
 
 ## AI: POST /respond
 
-Request gồm `request_id` (khóa yêu cầu AI do BE quản lý), `chat_id`, `lesson_id`, `text`, `history` (role/text lấy từ DB), `selected_source_ids`. Không gửi Persona: agent tự đọc Persona hiện tại theo `X-Learner-ID` mỗi lượt. Header `Idempotency-Key` bằng `request_id`. BE lưu khóa trong SQLite: giữ nguyên khi timeout/5xx hoặc lỗi lưu DB; đổi khóa sau phản hồi vi phạm contract (JSON/schema/citation/proposal). Upstream phải tái sử dụng kết quả cùng key. ID lượt trong ứng dụng và `client_request_id` của FE vẫn giữ nguyên, không nhân đôi tin nhắn. Chỉ retry lượt cuối để không đưa lịch sử tương lai vào lượt cũ; lỗi 409 hướng người dùng gửi thành câu hỏi mới.
+Request gồm `request_id` (khóa yêu cầu AI do BE quản lý), `chat_id`, `lesson_id`, `text`, `history` (role/text lấy từ DB), `selected_source_ids`. Không gửi Persona: agent tự đọc Persona hiện tại theo `X-Learner-ID` mỗi lượt. Header `Idempotency-Key` bằng `request_id`. BE lưu khóa trong SQLite: giữ nguyên khi timeout/5xx hoặc lỗi lưu DB; đổi khóa sau phản hồi vi phạm contract (JSON/schema/citation/persona update). Upstream phải tái sử dụng kết quả cùng key. ID lượt trong ứng dụng và `client_request_id` của FE vẫn giữ nguyên, không nhân đôi tin nhắn. Chỉ retry lượt cuối để không đưa lịch sử tương lai vào lượt cũ; lỗi 409 hướng người dùng gửi thành câu hỏi mới.
 
 Response:
 
@@ -20,13 +20,13 @@ Response:
   "text": "Nội dung phản hồi",
   "citations": [{"source_id": "demo-grounding--kiem-chung", "locator": "mock-lessons/demo-grounding.md#kiem-chung"}],
   "actions": [{"label": "Giải thích thêm", "type": "send_message", "value": "Giải thích thêm"}],
-  "persona_proposals": []
+  "persona_updates": []
 }
 ```
 
 `decision`: answer/chat/clarify/abstain. Answer phải có citation. `chat` là trả lời thường không cần citation (chào hỏi, cảm ơn, câu không liên quan bài); FE không gắn badge. `locator` là chuỗi đường dẫn Markdown + `#anchor` đúng nguồn do loader tạo, không phải URL do model dựng. Actions chỉ gồm send_message hoặc open_source (value là source ID).
 
-Proposal: `{id,before,after}`. ID gồm chữ/số/gạch ngang, tối đa 80 ký tự. AI/Persona service phải đăng ký proposal theo owner trước khi trả ID. Text Persona tối đa 2.000 ký tự. Không tự lưu proposal; giữ luật system/citation/quiz ở phía AI. Không để Persona ghi đè luật cố định.
+Persona update: `{id,action,line,before,after}` — thay đổi Persona **đã áp dụng** trong lượt này (`action`: `remember` | `forget`; `line` là dòng được ghi/xoá, tối đa 200 ký tự). ID gồm chữ/số/gạch ngang, tối đa 80 ký tự; Persona service ghi theo owner trước khi trả ID. FE hiện "Đã ghi nhớ / Đã quên: <line> · Hoàn tác". Text Persona tối đa 2.000 ký tự. Giữ luật system/citation/quiz ở phía AI; Persona không ghi đè luật cố định.
 
 ## Persona service
 
@@ -35,10 +35,9 @@ Proposal: `{id,before,after}`. ID gồm chữ/số/gạch ngang, tối đa 80 k�
 | GET /persona | owner header | `{text,updated_at}` |
 | PUT /persona | `{text}` | Persona mới |
 | DELETE /persona/memory | không body | Persona mới, chỉ xoá mục ghi nhớ |
-| POST /persona/proposals/{id}/accept | `{edited_text}`; null thì áp dòng đề xuất vào Persona **hiện tại** | Persona mới |
-| POST /persona/proposals/{id}/reject | `{}` | JSON xác nhận; không đổi Persona |
+| POST /persona/updates/{id}/undo | `{}` | Persona mới; hoàn tác đúng dòng của thay đổi đó trên Persona **hiện tại** (ghi nhớ → xoá dòng hoặc trả lại dòng cũ bị thay; quên → thêm lại dòng) |
 
-Không có version hay hoàn tác: lần ghi sau thắng. `updated_at` là chuỗi thời gian hiển thị. Không snapshot theo chat: sửa Persona áp dụng từ câu hỏi tiếp theo. Persona service hiện nằm trong agent (`codebase/agent/persona/`).
+Không có version: lần ghi sau thắng; hoàn tác chỉ theo từng thay đổi do Tutor tạo. `updated_at` là chuỗi thời gian hiển thị. Không snapshot theo chat: sửa Persona áp dụng từ câu hỏi tiếp theo. Persona service hiện nằm trong agent (`codebase/agent/persona/`).
 
 Các mục Persona và chính sách dữ liệu nhạy cảm do Persona owner xử lý. Xoá memory chỉ xoá mục ghi nhớ trong Persona, không xoá lịch sử chat. Cần quyết định chính sách retention trước khi cung cấp thao tác “quên toàn bộ” theo nghĩa xoá dữ liệu.
 

@@ -16,7 +16,7 @@ class FakeServices:
         self.lessons = {x["id"]: x for x in load_lessons(Path(__file__).parents[1] / "lessons.sample.json")}
         self.calls = []
         self.personas = {}
-        self.proposals = {}
+        self.updates = {}
         self.failure = None
         self.reply_override = None
         self.entered = threading.Event()
@@ -39,7 +39,7 @@ class FakeServices:
                 return copy.deepcopy(self.reply_override)
             text = payload["text"].lower()
             source = self.lessons[payload["lesson_id"]]["sources"][0]
-            result = {"decision": "answer", "text": "[Fixture UI] Citation giúp bạn mở đúng nguồn để đối chiếu phát biểu. Đây là phản hồi cố định để thử giao diện, không phải AI.", "citations": [{"source_id": source["id"], "locator": source["locator"]}], "actions": [], "persona_proposals": []}
+            result = {"decision": "answer", "text": "[Fixture UI] Citation giúp bạn mở đúng nguồn để đối chiếu phát biểu. Đây là phản hồi cố định để thử giao diện, không phải AI.", "citations": [{"source_id": source["id"], "locator": source["locator"]}], "actions": [], "persona_updates": []}
             if "mơ hồ" in text or "giải thích đoạn" in text:
                 result.update(decision="clarify", text="[Fixture UI] Bạn muốn làm rõ phần dẫn nguồn hay phần thiếu căn cứ?", citations=[], actions=[{"type": "send_message", "label": "Phần dẫn nguồn", "value": "Citation là gì?"}])
             if "quiz" in text or "ngoài bài" in text:
@@ -49,20 +49,21 @@ class FakeServices:
                 before = current["text"]
                 if "## Tutor nhớ về bạn\n" not in before:
                     before += "\n\n## Tutor nhớ về bạn\n"
-                proposal = {"id": str(uuid.uuid4()), "before": current["text"], "after": before.replace("## Tutor nhớ về bạn\n", "## Tutor nhớ về bạn\n- Ưu tiên ví dụ dễ hiểu (fixture)\n", 1)}
-                self.proposals[proposal["id"]] = (owner, proposal)
-                result["persona_proposals"] = [proposal]
+                line = "Cách giải thích: ưu tiên ví dụ dễ hiểu (fixture)"
+                update = {"id": str(uuid.uuid4()), "action": "remember", "line": line, "before": current["text"],
+                          "after": before.replace("## Tutor nhớ về bạn\n", f"## Tutor nhớ về bạn\n- {line}\n", 1)}
+                self.updates[update["id"]] = (owner, update)
+                self.personas[owner] = {"text": update["after"], "updated_at": "Fixture UI"}  # ghi ngay, như agent thật
+                result["persona_updates"] = [update]
             return result
         current = self.current(owner)
         if method == "GET":
             return copy.deepcopy(current)
-        if path.endswith("/reject"):
-            return {"status": "rejected"}
-        if path.endswith("/accept"):
-            proposal_owner, proposal = self.proposals[path.split("/")[-2]]
-            if owner != proposal_owner:
-                raise HTTPException(404, "Proposal not found")
-            text = payload.get("edited_text") if payload.get("edited_text") is not None else proposal["after"]
+        if path.endswith("/undo"):
+            update_owner, update = self.updates[path.split("/")[-2]]
+            if owner != update_owner:
+                raise HTTPException(404, "Update not found")
+            text = current["text"].replace(f"- {update['line']}\n", "")
         elif path.endswith("/memory"):
             text = "# PERSONA — Tutor của tôi\n\n## Tính cách Tutor\n- Xưng hô: mình – bạn\n\n## Tutor nhớ về bạn\n"
         else:

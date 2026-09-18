@@ -19,7 +19,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from integrations import Services, ContractError
 from lessons import load_lessons
-from models import Accept, AIReply, NewChat, Persona, PersonaWrite, Question
+from models import AIReply, NewChat, Persona, PersonaWrite, Question
 
 HERE = Path(__file__).parent
 LOG = logging.getLogger("tutor")
@@ -67,9 +67,9 @@ def create_app(db_path=None, services=None, lessons_path=None):
             UNIQUE(chat_id, request_id));
         CREATE UNIQUE INDEX IF NOT EXISTS one_pending_turn ON turns(chat_id) WHERE status='pending';
         CREATE TABLE IF NOT EXISTS ai_keys (turn_id TEXT PRIMARY KEY REFERENCES turns(id), key TEXT NOT NULL);
-        CREATE TABLE IF NOT EXISTS proposals (
+        CREATE TABLE IF NOT EXISTS persona_updates (
             id TEXT PRIMARY KEY, owner TEXT NOT NULL, chat_id TEXT NOT NULL,
-            status TEXT NOT NULL DEFAULT 'pending');
+            status TEXT NOT NULL DEFAULT 'applied');
         """)
         # Database cũ còn cột snapshot Persona; Persona giờ đọc trực tiếp từ agent mỗi lượt.
         if any(column["name"] == "persona" for column in db.execute("PRAGMA table_info(chats)")):
@@ -169,15 +169,15 @@ def create_app(db_path=None, services=None, lessons_path=None):
         chat = chat_for(chat_id, user)
         with connect() as db:
             turns = db.execute("SELECT * FROM turns WHERE chat_id=? ORDER BY created_at,id", (chat_id,)).fetchall()
-            proposal_states = {r["id"]: r["status"] for r in db.execute("SELECT id,status FROM proposals WHERE chat_id=?", (chat_id,))}
+            update_states = {r["id"]: r["status"] for r in db.execute("SELECT id,status FROM persona_updates WHERE chat_id=?", (chat_id,))}
         messages = []
         for turn in turns:
             question = json.loads(turn["input"])
             messages.append({"role": "user", "text": question["text"], "status": turn["status"], "request": question, "error": turn["error"], "retryable": turn["status"] == "failed" and turn["id"] == turns[-1]["id"]})
             if turn["result"]:
                 reply = json.loads(turn["result"])
-                for proposal in reply["persona_proposals"]:
-                    proposal["status"] = proposal_states.get(proposal["id"], "pending")
+                for update in reply.get("persona_updates", []):
+                    update["status"] = update_states.get(update["id"], "applied")
                 messages.append({"role": "assistant", **reply})
         return {"id": chat_id, "lesson_id": chat["lesson_id"], "messages": messages}
 
@@ -224,13 +224,13 @@ def create_app(db_path=None, services=None, lessons_path=None):
                 if action.type == "open_source" and (action.value not in sources or sources[action.value][0] != chat["lesson_id"]):
                     raise ValueError("Invalid source action")
             if not services.persona_url:
-                reply.persona_proposals = []  # không có Persona service thì không có chỗ lưu đề xuất
+                reply.persona_updates = []  # không có Persona service thì không có chỗ hoàn tác
             response = reply.model_dump()
             response["message_id"] = turn_id
             response["request_id"] = body.client_request_id
             with connect() as db:
-                for proposal in reply.persona_proposals:
-                    db.execute("INSERT INTO proposals (id,owner,chat_id) VALUES (?,?,?)", (proposal.id, user, chat_id))
+                for update in reply.persona_updates:
+                    db.execute("INSERT INTO persona_updates (id,owner,chat_id) VALUES (?,?,?)", (update.id, user, chat_id))
                 db.execute("UPDATE turns SET status='complete',result=? WHERE id=?", (json.dumps(response, ensure_ascii=False), turn_id))
             return response
         except (ValidationError, ValueError, ContractError, sqlite3.IntegrityError):
@@ -266,29 +266,16 @@ def create_app(db_path=None, services=None, lessons_path=None):
     def clear_memory(user=Depends(owner)):
         return persona_call("DELETE", "/persona/memory", user)
 
-    def check_proposal(proposal_id, user):
+    @app.post("/api/persona/updates/{update_id}/undo")
+    def undo(update_id: str, user=Depends(owner)):
         with connect() as db:
-            row = db.execute("SELECT * FROM proposals WHERE id=? AND owner=?", (proposal_id, user)).fetchone()
+            row = db.execute("SELECT * FROM persona_updates WHERE id=? AND owner=?", (update_id, user)).fetchone()
         if not row:
-            raise HTTPException(404, "Không tìm thấy đề xuất.")
-        if row["status"] != "pending":
-            raise HTTPException(409, "Đề xuất đã được xử lý. Tải lại hội thoại.")
-
-    @app.post("/api/persona/proposals/{proposal_id}/accept")
-    def accept(proposal_id: str, body: Accept, user=Depends(owner)):
-        check_proposal(proposal_id, user)
-        result = persona_call("POST", f"/persona/proposals/{proposal_id}/accept", user, body.model_dump())
+            raise HTTPException(404, "Không tìm thấy thay đổi Persona.")
+        result = persona_call("POST", f"/persona/updates/{update_id}/undo", user, {})
         with connect() as db:
-            db.execute("UPDATE proposals SET status='accepted' WHERE id=?", (proposal_id,))
+            db.execute("UPDATE persona_updates SET status='undone' WHERE id=?", (update_id,))
         return result
-
-    @app.post("/api/persona/proposals/{proposal_id}/reject")
-    def reject(proposal_id: str, user=Depends(owner)):
-        check_proposal(proposal_id, user)
-        services.request("persona", "POST", f"/persona/proposals/{proposal_id}/reject", user, {})
-        with connect() as db:
-            db.execute("UPDATE proposals SET status='rejected' WHERE id=?", (proposal_id,))
-        return {"status": "rejected"}
 
     @app.get("/")
     def index():

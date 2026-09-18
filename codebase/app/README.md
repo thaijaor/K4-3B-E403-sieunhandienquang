@@ -38,7 +38,7 @@ Chạy **một worker**. Session ẩn danh bằng cookie HttpOnly, sống 7 ngà
 .\.venv\Scripts\python.exe -m uvicorn tests.preview:create_preview --factory --app-dir codebase/app --host 127.0.0.1 --port 8765
 ```
 
-Preview dùng doubles trong `tests/`, có nhãn **THỬ UI**. “Citation là gì?” thử trả lời; “Câu hỏi mơ hồ” thử hỏi lại; “quiz” thử từ chối; “Ghi nhớ ví dụ” thử proposal. Đây không phải đánh giá AI. Database preview nằm trong thư mục tạm, tạo mới mỗi lần khởi động.
+Preview dùng doubles trong `tests/`, có nhãn **THỬ UI**. “Citation là gì?” thử trả lời; “Câu hỏi mơ hồ” thử hỏi lại; “quiz” thử từ chối; “Ghi nhớ ví dụ” thử ghi nhớ + hoàn tác. Đây không phải đánh giá AI. Database preview nằm trong thư mục tạm, tạo mới mỗi lần khởi động.
 
 ## Kiểm thử
 
@@ -61,6 +61,6 @@ Browser check cần preview đang chạy, chỉ xoá cookie/localStorage của b
 - Persona không có version hay snapshot: sửa hoặc xoá phần ghi nhớ áp dụng từ câu hỏi tiếp theo, kể cả trong chat đang mở.
 - Retry giữ ID lượt phía FE, không nhân đôi. Khóa upstream được giữ khi timeout/5xx và đổi sau lỗi contract. Chỉ retry lượt cuối; lượt lỗi cũ có thể gửi thành câu hỏi mới. Một chat xử lý một lượt tại một thời điểm. Sau restart, lượt chưa xong chuyển sang lỗi để thử lại.
 - BE chỉ kiểm tra citation thuộc manifest/locator, không đánh giá phát biểu có được nguồn hỗ trợ hay không.
-- Nội dung AI/Persona render bằng text, không thực thi HTML. Proposal chỉ được chuyển tới API accept khi học viên bấm Lưu.
+- Nội dung AI/Persona render bằng text, không thực thi HTML. Tutor tự ghi nhớ / quên; mỗi thay đổi hiện dòng "Đã ghi nhớ · Hoàn tác" và chỉ hoàn tác được bởi chính owner.
 - Không có streaming, dashboard, đăng ký tài khoản, upload hay vector DB.
 - Để chạy AI thật: nhóm AI/Persona cung cấp URL/credential, đáp ứng contract, đồng bộ source IDs với manifest, rồi chạy golden set riêng. Chưa có kết quả live-provider.
