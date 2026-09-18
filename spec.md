@@ -171,10 +171,10 @@ Persona là tính năng chính, nên phần lớn bộ đo dành cho Persona; l�
   - **Tự khai:** chưa đạt 3 chỉ số (precision ghi nhớ, tuân theo Persona non-tech, dặn lại ở E02); sẽ sửa luật non-tech và chạy lượt 3 trước CP6.
 
 ## §8. Phân công & kế hoạch
-- **Nguyễn Hồng Thái** (đội trưởng) — product/spec: evidence + impact, lát cắt, automation, HAX/PAIR, slide, pitch, nộp form.
-- **Trần Mạnh Tùng** — build: retrieval nguồn, gọi LLM, quyết định trả lời/hỏi lại/từ chối, UI citation, log; video CP3, CP5.
-- **Nguyễn Mạnh Cường** — eval: golden set ≥20 case, quality bar, bảng kết quả, 4 lớp chỗ khó + kịch bản.
-- **Willing users:** 16/20 học viên ngoài nhóm đồng ý dùng thử ~10 phút, 3 người "có thể" ([khảo sát](https://docs.google.com/forms/d/e/1FAIpQLSelpNvWBFEtqST_UcfjQ9s3gfIvXzC-UhnVL3zSrf01_uj6Pw/viewform); form không thu tên — nhóm liên hệ trực tiếp). **Kế hoạch validation (CP5):** ≥ 5 người ngoài nhóm, mỗi người ~10 phút theo guide §4.2 (giao task theo outcome, im lặng quan sát, hỏi sau); nhật ký + quote nguyên văn trong `validation/`; ≥ 1 thay đổi ghi vào §9.
+- **Nguyễn Hồng Thái** (đội trưởng) — product/spec/Persona: bảng impact, lát cắt, automation, HAX/PAIR, thiết kế Persona, quality bar, slide, pitch, nộp form.
+- **Trần Mạnh Tùng** — agent/retrieval/eval automation: gọi LLM, BM25 retrieval, quyết định trả lời/hỏi lại/từ chối, citation guard, log/trace, golden set và script đo CP3; video demo.
+- **Nguyễn Mạnh Cường** — app/UI + evidence/validation: frontend/backend Tutor, tích hợp Persona, bài học Markdown, kiểm thử UI; khảo sát, user test, quote và feedback log.
+- **Willing users:** 16/20 học viên ngoài nhóm đồng ý dùng thử ~10 phút, 3 người "có thể" ([khảo sát](https://docs.google.com/forms/d/e/1FAIpQLSelpNvWBFEtqST_UcfjQ9s3gfIvXzC-UhnVL3zSrf01_uj6Pw/viewform); form không thu tên — nhóm liên hệ trực tiếp). **Kế hoạch validation (CP5):** ≥ 2 học viên ngoài nhóm, mỗi người ~10 phút theo guide §4.2 (giao task theo outcome, im lặng quan sát, hỏi sau); nhật ký + quote nguyên văn trong `validation/`; ≥ 1 thay đổi ghi vào §9.
 
 ## §9. Changelog
 | Thời điểm | Đổi gì | Vì sao (trỏ về feedback/case nào) |

@@ -8,9 +8,9 @@
 
 | Họ và Tên | Mã Học Viên | Vai trò chính | Phần việc đảm nhiệm trong dự án |
 |---|---|---|---|
-| Nguyễn Hồng Thái | 2A202602894 | Đội trưởng · Product / Spec | Canvas; evidence + bảng impact (spec §1–§2); lát cắt, non-goals, automation, ≥4 nguyên tắc HAX/PAIR (§4); nộp 5 form; slide; dẫn pitch |
-| Trần Mạnh Tùng | 2A202602879 | Build | Prototype: tìm đoạn nguồn trong transcript/slide, gọi LLM, quyết định trả lời / hỏi lại / từ chối, UI hiển thị citation; log/trace; video CP3 và video dự phòng CP5 |
-| Nguyễn Mạnh Cường | 2A202602650 | Eval / Quality | Golden set ≥20 case từ chatlog; chiều chất lượng + quality bar; chạy trọn bộ, bảng %; 4 lớp chỗ khó, ≥8 kịch bản, 4 đường đi (spec §5–§7) |
+| Nguyễn Hồng Thái | 2A202602894 | Đội trưởng · Product / Spec / Persona | Canvas; bảng impact; lát cắt, non-goals, automation, HAX/PAIR; thiết kế Persona; quality bar; slide, pitch và nộp form |
+| Trần Mạnh Tùng | 2A202602879 | Agent / Retrieval / Eval automation | Pipeline AI; BM25 retrieval; quyết định trả lời / hỏi lại / từ chối; citation guard; log/trace; golden set và script đo CP3; video demo |
+| Nguyễn Mạnh Cường | 2A202602650 | App / UI · Evidence / Validation | Frontend/backend Tutor; tích hợp Persona; bài học Markdown và kiểm thử UI; khảo sát người dùng; validation, quote và feedback log |
 
 > Nhóm copy nguyên file README này về repo của mình, rồi điền bảng trên. Cột **Phần việc đảm nhiệm** ghi càng cụ thể càng tốt.
 
@@ -313,7 +313,7 @@ Làm ở **CP5**, lưu trong thư mục `validation/`.
 
 | | |
 |---|---|
-| **5 người ngoài nhóm** dùng thử | trong đó **2 người đã khai từ CP1** |
+| **2 người ngoài nhóm** dùng thử | theo mức tối thiểu của rubric R6 |
 | **Quote nguyên văn** | chép đúng lời họ nói, kể cả viết sai chính tả |
 | **Bảng nhật ký** | ai thử · giao task gì · kẹt ở đâu · quote · quyết định |
 | **Ít nhất 1 thay đổi** | ghi vào **§9 Changelog** trong `spec.md`. Giữ nguyên thì nói rõ vì sao |
