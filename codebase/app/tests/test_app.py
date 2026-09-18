@@ -70,24 +70,14 @@ class ApplicationTests(unittest.TestCase):
             self.assertEqual(other.get(f"/api/sources/demo-grounding--kiem-chung?chat_id={chat}").status_code, 404)
             self.assertEqual(self.ask(chat, client=other).status_code, 404)
 
-    def test_snapshot_immutable_across_edits_and_new_chat(self):
+    def test_persona_is_not_snapshotted_into_chat(self):
         chat = self.chat()
-        saved = self.client.put("/api/persona", json={"text": "Ngắn gọn", "expected_version": 1})
-        self.assertEqual(saved.json()["version"], 2)
+        self.assertFalse([c for c in self.services.calls if c[0] == "persona"])
+        self.assertEqual(self.client.put("/api/persona", json={"text": "Ngắn gọn"}).json()["text"], "Ngắn gọn")
         self.ask(chat)
-        old_input = [c[4] for c in self.services.calls if c[0] == "ai"][-1]
-        self.assertEqual(old_input["persona"]["version"], 1)
-        second = self.chat()
-        self.ask(second)
-        new_input = [c[4] for c in self.services.calls if c[0] == "ai"][-1]
-        self.assertEqual(new_input["persona"]["text"], "Ngắn gọn")
-
-    def test_empty_persona_and_explicit_opt_out(self):
-        self.client.put("/api/persona", json={"text": "", "expected_version": 1})
-        chat = self.chat()
-        self.assertEqual(self.ask(chat).status_code, 200)
-        opt_out = self.chat(without_persona=True)
-        self.assertIsNone(self.client.get(f"/api/chats/{opt_out}").json()["persona_version"])
+        self.assertNotIn("persona", [c[4] for c in self.services.calls if c[0] == "ai"][-1])
+        self.assertNotIn("persona_version", self.client.get(f"/api/chats/{chat}").json())
+        self.assertEqual(self.client.post("/api/chats", json={"lesson_id": "demo-grounding", "without_persona": True}).status_code, 422)
 
     def test_duplicate_retry_returns_same_result(self):
         chat = self.chat()
@@ -145,37 +135,44 @@ class ApplicationTests(unittest.TestCase):
         for payload in [{"text": "  ", "client_request_id": "request-0001"}, {"text": "x" * 4001, "client_request_id": "request-0001"}, {"text": "x", "client_request_id": "request-0001", "persona": {"text": "override"}}, {"text": "x", "client_request_id": "request-0001", "selected_source_ids": ["unknown"]}]:
             self.assertEqual(self.client.post(f"/api/chats/{chat}/messages", json=payload).status_code, 422)
 
-    def test_proposal_does_not_save_until_accept_and_undo(self):
+    def test_proposal_does_not_save_until_accept(self):
         chat = self.chat()
+        before = self.client.get("/api/persona").json()["text"]
         proposal = self.ask(chat, "Ghi nhớ ví dụ").json()["persona_proposals"][0]
-        self.assertEqual(self.client.get("/api/persona").json()["version"], 1)
-        result = self.client.post(f"/api/persona/proposals/{proposal['id']}/accept", json={"expected_version": 1, "edited_text": "Đã sửa"})
+        self.assertEqual(self.client.get("/api/persona").json()["text"], before)
+        result = self.client.post(f"/api/persona/proposals/{proposal['id']}/accept", json={"edited_text": "Đã sửa"})
         self.assertEqual(result.json()["text"], "Đã sửa")
-        self.assertEqual(self.client.get(f"/api/chats/{chat}").json()["persona_version"], 1)
-        undo = self.client.post("/api/persona/undo", json={"target_version": 1, "expected_version": 2})
-        self.assertEqual(undo.json()["version"], 3)
-        self.assertNotEqual(undo.json()["text"], "Đã sửa")
+        self.assertEqual(self.client.get(f"/api/chats/{chat}").json()["messages"][1]["persona_proposals"][0]["status"], "accepted")
+        self.assertEqual(self.client.post("/api/persona/undo", json={}).status_code, 404)
 
     def test_proposal_reject_and_owner_boundary(self):
         chat = self.chat()
         proposal = self.ask(chat, "Ghi nhớ ví dụ").json()["persona_proposals"][0]
         with TestClient(self.app, headers=HEADERS) as other:
             other.post("/api/session")
-            self.assertEqual(other.post(f"/api/persona/proposals/{proposal['id']}/accept", json={"expected_version": 1}).status_code, 404)
+            self.assertEqual(other.post(f"/api/persona/proposals/{proposal['id']}/accept", json={}).status_code, 404)
+        before = self.client.get("/api/persona").json()["text"]
         rejected = self.client.post(f"/api/persona/proposals/{proposal['id']}/reject", json={})
         self.assertEqual(rejected.status_code, 200)
-        self.assertEqual(self.client.get("/api/persona").json()["version"], 1)
-        self.assertEqual(self.client.post(f"/api/persona/proposals/{proposal['id']}/accept", json={"expected_version": 1}).status_code, 409)
+        self.assertEqual(self.client.get("/api/persona").json()["text"], before)
+        self.assertEqual(self.client.post(f"/api/persona/proposals/{proposal['id']}/accept", json={}).status_code, 409)
 
-    def test_conflict_and_persona_limits(self):
-        self.assertEqual(self.client.put("/api/persona", json={"text": "x", "expected_version": 0}).status_code, 409)
-        self.assertEqual(self.client.put("/api/persona", json={"text": "x" * 2001, "expected_version": 1}).status_code, 422)
+    def test_persona_limits(self):
+        self.assertEqual(self.client.put("/api/persona", json={"text": "x" * 2001}).status_code, 422)
+        self.assertEqual(self.client.put("/api/persona", json={"text": "x", "expected_version": 1}).status_code, 422)
 
-    def test_clear_memory_forwards_and_preserves_chat(self):
-        chat = self.chat()
-        result = self.client.request("DELETE", "/api/persona/memory", json={"expected_version": 1})
-        self.assertEqual(result.json()["version"], 2)
-        self.assertEqual(self.client.get(f"/api/chats/{chat}").json()["persona_version"], 1)
+    def test_clear_memory_forwards(self):
+        self.client.put("/api/persona", json={"text": "tuỳ chỉnh"})
+        result = self.client.delete("/api/persona/memory")
+        self.assertEqual(result.status_code, 200)
+        self.assertIn("## Tutor nhớ về bạn", result.json()["text"])
+
+    def test_proposals_dropped_without_persona_service(self):
+        self.services.persona_url = ""
+        self.services.reply_override = {"decision": "chat", "text": "Ok", "persona_proposals": [{"id": "p-1", "before": "a", "after": "b"}]}
+        response = self.ask(self.chat())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["persona_proposals"], [])
 
     def test_missing_services_do_not_fall_back_to_fake_ai(self):
         app = create_app(Path(self.temp.name) / "disabled.sqlite", Services())
@@ -187,10 +184,10 @@ class ApplicationTests(unittest.TestCase):
             self.assertEqual(self.ask(chat, client=client).status_code, 503)
             self.assertEqual(client.get("/api/persona").status_code, 503)
 
-    def test_persona_failure_does_not_silently_drop_snapshot(self):
+    def test_persona_failure_does_not_block_new_chat(self):
         self.services.failure = HTTPException(502, "upstream")
-        self.assertEqual(self.client.post("/api/chats", json={"lesson_id": "demo-grounding"}).status_code, 502)
-        self.chat(without_persona=True)
+        self.assertEqual(self.client.post("/api/chats", json={"lesson_id": "demo-grounding"}).status_code, 200)
+        self.assertEqual(self.client.get("/api/persona").status_code, 502)
 
     def test_foreign_source_and_recovery_after_restart(self):
         chat = self.chat()
@@ -326,7 +323,7 @@ class ApplicationTests(unittest.TestCase):
         forbidden = proposal['after'].split('## Không được nhớ')[1]
         self.assertIn('Ưu tiên ví dụ', remembered)
         self.assertNotIn('Ưu tiên ví dụ', forbidden)
-        result = self.client.post(f"/api/persona/proposals/{proposal['id']}/accept", json={'expected_version': 1})
+        result = self.client.post(f"/api/persona/proposals/{proposal['id']}/accept", json={})
         self.assertEqual(result.json()['text'], proposal['after'])
 
 

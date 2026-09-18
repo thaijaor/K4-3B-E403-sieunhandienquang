@@ -21,10 +21,7 @@
       <header class="tutor-header"><div class="tutor-heading"><span class="spark" aria-hidden="true">✦</span><div><h2 id="tutor-title">Trợ giảng AI</h2><span class="muted small">Cùng bạn hiểu rõ bài đang đọc</span></div><button id="tutor-close" class="icon" aria-label="Đóng trợ giảng">×</button></div><div class="toolbar"><button id="persona-open" class="secondary">Persona</button><button id="new-chat" class="secondary">＋ Chat mới</button><button id="history-open" class="secondary" aria-label="Lịch sử chat">Lịch sử</button><button id="collapse" class="icon" aria-label="Thu gọn trợ giảng" aria-expanded="true">−</button></div></header>
       <div id="chat-body" class="chat-body">
         <div class="chat-status">
-        <div id="version" class="version"></div>
-        <div id="persona-banner" class="notice" hidden><span id="persona-banner-text"></span><div><button id="banner-new" class="text-button">Chat mới</button><button id="undo" class="text-button" hidden>Hoàn tác</button></div></div>
         <div id="chat-error" class="error" role="alert" hidden></div>
-        <button id="without-persona" class="secondary fallback" hidden>Tạo chat không dùng Persona</button>
         </div>
         <div id="messages" class="messages" role="log" aria-label="Hội thoại" aria-live="polite"></div>
         <form id="composer" class="composer">
@@ -39,11 +36,11 @@
   <dialog id="persona-dialog" class="drawer" aria-labelledby="persona-title">
     <div class="dialog-header"><div><div class="eyebrow">CÁCH TUTOR ĐỒNG HÀNH</div><h2 id="persona-title">Tutor của tôi</h2></div><button id="persona-close" class="icon" aria-label="Đóng Persona">×</button></div>
     <div class="drawer-content">
-    <p class="muted">Cho Tutor biết bạn muốn được giải thích như thế nào. Thay đổi áp dụng từ <strong>chat mới</strong>.</p>
+    <p class="muted">Cho Tutor biết bạn muốn được giải thích như thế nào. Thay đổi áp dụng từ <strong>câu hỏi tiếp theo</strong>.</p>
     <div id="persona-status" class="small muted"></div><div id="persona-error" class="error" role="alert" hidden></div>
     <pre id="persona-read" class="persona-read">Đang tải Persona…</pre>
     <div id="persona-edit-area" hidden><label for="persona-text">Nội dung Persona</label><textarea id="persona-text" maxlength="2000" rows="14"></textarea><div id="persona-count" class="small muted"></div></div>
-    <div class="memory-delete"><h3>Bạn quyết định điều Tutor ghi nhớ</h3><p class="small muted">Xoá phần “Tutor nhớ về bạn” khỏi Persona hiện tại. Chat đã tạo vẫn giữ bản Persona lúc bắt đầu.</p><button id="persona-clear" class="danger" disabled>Xoá phần ghi nhớ</button></div>
+    <div class="memory-delete"><h3>Bạn quyết định điều Tutor ghi nhớ</h3><p class="small muted">Xoá phần “Tutor nhớ về bạn” khỏi Persona.</p><button id="persona-clear" class="danger" disabled>Xoá phần ghi nhớ</button></div>
     </div>
     <div class="dialog-actions"><button id="persona-edit" class="primary" disabled>Sửa</button><button id="persona-save" class="primary" hidden>Lưu</button><button id="persona-cancel" class="secondary" hidden>Huỷ</button><button id="persona-reload" class="secondary">Tải lại bản mới</button></div>
   </dialog>

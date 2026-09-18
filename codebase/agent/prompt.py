@@ -1,4 +1,5 @@
-"""System prompt cơ bản + ghép messages. Tùng mở rộng phần tool/citation, Thái phần Persona."""
+"""System prompt cơ bản + ghép messages. Tùng mở rộng phần tool/citation; Persona ở persona/tools.py."""
+from persona.tools import persona_block
 
 SYSTEM_PROMPT = """Bạn là Trợ giảng AI trên VLearn, giúp học viên hiểu bài đang mở.
 
@@ -16,13 +17,8 @@ def lesson_block(lesson):
     return f"<bai_hoc>\nTên bài: {lesson['title']}\nCác mục:\n{outline}\n</bai_hoc>"
 
 
-def persona_block(persona):
-    """TODO(Thái): đưa Persona vào prompt theo README § Persona. Hiện chưa dùng."""
-    return ""
-
-
-def build_messages(request, lesson):
-    system = "\n\n".join(part for part in (SYSTEM_PROMPT, lesson_block(lesson), persona_block(request.persona)) if part)
+def build_messages(request, lesson, persona=None):
+    system = "\n\n".join(part for part in (SYSTEM_PROMPT, lesson_block(lesson), persona_block(persona)) if part)
     messages = [{"role": "system", "content": system}]
     messages += [{"role": turn.role, "content": turn.text} for turn in request.history]
     messages.append({"role": "user", "content": request.text})

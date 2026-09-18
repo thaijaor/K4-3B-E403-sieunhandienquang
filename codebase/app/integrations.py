@@ -26,7 +26,7 @@ class Services:
             with httpx.Client(timeout=30, follow_redirects=False, trust_env=False) as client:
                 response = client.request(method, base + path, headers=headers, json=payload)
             if response.status_code == 409:
-                raise HTTPException(409, "Phiên bản đã thay đổi. Tải lại bản mới và đối chiếu bản nháp.")
+                raise HTTPException(409, "Dữ liệu vừa thay đổi. Tải lại rồi thử lại.")
             if response.status_code == 404:
                 raise HTTPException(404, "Dữ liệu tích hợp không còn tồn tại.")
             response.raise_for_status()

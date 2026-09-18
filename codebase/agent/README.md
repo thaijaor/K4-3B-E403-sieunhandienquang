@@ -2,7 +2,7 @@
 
 Service AI riêng mà backend (`codebase/app`) gọi qua `POST /respond`. Service này cũng chứa luôn Persona.
 
-**Hiện trạng (skeleton):** đã gọi được model thật với system prompt cơ bản; mọi câu đều trả `decision: "chat"`, chưa đọc nội dung bài, chưa citation, clarify hay Persona. Phần còn lại chia cho Thái và Tùng ở cuối file.
+**Hiện trạng:** gọi được model thật với system prompt cơ bản; Persona đã xong (store, route, đưa vào prompt, tool đề xuất ghi nhớ). Mọi câu vẫn trả `decision: "chat"` — chưa đọc nội dung bài, chưa citation/clarify (phần của Tùng).
 
 > Thiết kế và tool dưới đây là **đề xuất**. Người làm tự xem xét, đổi tên, gộp, tách hoặc viết lại nếu thấy hợp lý hơn — chỉ cần giữ đúng contract với backend (`codebase/app/CONTRACT.md`) và cập nhật lại README này.
 
@@ -16,7 +16,7 @@ copy codebase\agent\.env.example codebase\agent\.env   # điền OPENAI_API_KEY 
 .\.venv\Scripts\python.exe -m uvicorn app:create_app --factory --app-dir codebase/agent --host 127.0.0.1 --port 8001
 ```
 
-Nối backend: chạy app với `AI_API_URL=http://127.0.0.1:8001`. **Chưa đặt `PERSONA_API_URL`** cho tới khi Persona xong — route Persona đang trả 501 nên backend sẽ không tạo được chat.
+Nối backend: chạy app với `AI_API_URL=http://127.0.0.1:8001` và `PERSONA_API_URL=http://127.0.0.1:8001`.
 
 Test: `cd codebase/agent` rồi `..\..\.venv\Scripts\python.exe -m unittest discover -s tests -v` (dùng LLM giả, không tốn key).
 
@@ -30,7 +30,7 @@ Test: `cd codebase/agent` rồi `..\..\.venv\Scripts\python.exe -m unittest disc
 | `lessons.py` | Đọc manifest; mỗi H2 `## Tên {#anchor}` là một đoạn nguồn. Giữ khớp `codebase/app/lessons.py` | chung |
 | `prompt.py` | System prompt cơ bản + ghép messages | Tùng (flow), Thái (`persona_block`) |
 | `agent.py` | Xử lý một lượt — hiện gọi LLM 1 lần | Tùng |
-| `persona/` | Store + 6 route Persona — hiện trả 501 | Thái |
+| `persona/` | Store SQLite, 5 route Persona, tool `propose_persona_memory`, khối `<persona>` trong prompt | Thái |
 | `tests/` | Test với LLM giả + bài fixture | ai sửa phần nào thêm test phần đó |
 
 ## Thiết kế
@@ -90,8 +90,11 @@ guard (code) ──▶ JSON về BE          tối đa 2 lần search, 3 vòng L
 
 - Nằm trong agent. Nội dung là markdown ≤2.000 ký tự, 3 mục: *Tính cách Tutor* · *Tutor nhớ về bạn* · *Không được nhớ* (spec §4).
 - Đưa vào prompt trong khối `<persona>`, chỉ điều chỉnh cách trình bày (độ dài, xưng hô, ví dụ); luật cố định luôn thắng.
-- Tutor chỉ **đề xuất** ghi nhớ; học viên bấm Lưu mới ghi.
-- Version/Hoàn tác: Thái quyết định bỏ hay giữ, rồi sửa BE/FE/CONTRACT/spec cho khớp.
+- Tutor chỉ **đề xuất** ghi nhớ; học viên bấm Lưu mới ghi. Tutor chỉ đề xuất vào *Tính cách Tutor* hoặc *Tutor nhớ về bạn*; điều trùng với *Không được nhớ* bị bỏ qua.
+- **Không version, không hoàn tác, không snapshot theo chat.** Agent đọc Persona hiện tại theo `X-Learner-ID` mỗi lượt, nên sửa Persona áp dụng ngay câu hỏi tiếp theo.
+- Bấm Lưu một đề xuất = áp dòng đó vào Persona **hiện tại** (không ghi đè bằng bản `after` cũ), nên học viên sửa tay giữa chừng không bị mất.
+- Dòng dạng `Khoá: giá trị` (vd `Độ dài: ngắn gọn`) thay dòng cùng khoá thay vì thêm trùng.
+- Mã: `persona/store.py` (SQLite, `AGENT_DB`), `persona/routes.py`, `persona/tools.py` (tool + khối prompt). `agent.py` đã có vòng tool nhỏ cho tool này — Tùng mở rộng thêm tool của mình vào dict `tools`.
 
 ## Đề xuất tool
 
@@ -112,8 +115,8 @@ Cần thử: endpoint Gemini tương thích OpenAI có hỗ trợ `tool_choice="
 
 | Người | Phạm vi | Việc |
 |---|---|---|
-| **Thái** | Persona | `persona/`: store SQLite theo học viên, 6 route theo CONTRACT (hoặc bản rút gọn sau khi bỏ version) · `propose_persona_memory` · `persona_block()` trong `prompt.py` · sửa BE/FE/CONTRACT/spec phần version · bật `PERSONA_API_URL` khi xong |
+| **Thái** | Persona | ✅ Xong: store SQLite, 5 route, `propose_persona_memory`, `persona_block()`, bỏ version/snapshot ở BE/FE/CONTRACT. Chạy BE với `PERSONA_API_URL` trỏ vào agent |
 | **Tùng** | Flow agent | Vòng tool trong `agent.py` · `search_lesson` (BM25) · `answer`/`chat`/`clarify`/`abstain` · citation + guard · idempotency theo `Idempotency-Key` (chỉ cache lượt thành công) · trace JSONL cho CP3/eval |
 | **Cường** | Eval | Chạy golden set qua `/respond`, đọc trace |
 
-Điểm nối giữa hai người: `propose_persona_memory` (Thái viết hàm, Tùng đăng ký vào vòng tool) và `persona_block()` (Thái viết, Tùng gọi khi ghép prompt).
+Điểm nối giữa hai người: `agent.py` đã có vòng tool và dict `tools` với `propose_persona_memory` — Tùng thêm tool của mình vào đó; `persona_block()` đã được gọi trong `build_messages()`.

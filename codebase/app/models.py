@@ -9,7 +9,6 @@ class Contract(BaseModel):
 
 class NewChat(Contract):
     lesson_id: str = Field(min_length=1, max_length=100)
-    without_persona: bool = False
 
 
 class Question(Contract):
@@ -27,25 +26,15 @@ class Question(Contract):
 
 class Persona(Contract):
     text: str = Field(max_length=2000)
-    version: int = Field(ge=0)
     updated_at: str
 
 
 class PersonaWrite(Contract):
     text: str = Field(max_length=2000)
-    expected_version: int = Field(ge=0)
 
 
-class Version(Contract):
-    expected_version: int = Field(ge=0)
-
-
-class Accept(Version):
+class Accept(Contract):
     edited_text: str | None = Field(default=None, max_length=2000)
-
-
-class Undo(Version):
-    target_version: int = Field(ge=0)
 
 
 class Citation(Contract):
@@ -61,7 +50,6 @@ class Action(Contract):
 
 class Proposal(Contract):
     id: str = Field(pattern=r"^[a-zA-Z0-9-]{1,80}$")
-    base_version: int = Field(ge=0)
     before: str = Field(max_length=2000)
     after: str = Field(max_length=2000)
 

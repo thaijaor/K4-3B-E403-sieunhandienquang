@@ -9,21 +9,14 @@ class Turn(BaseModel):
     text: str
 
 
-class PersonaSnapshot(BaseModel):
-    text: str
-    version: int | None = None
-    updated_at: str | None = None
-
-
 class RespondRequest(BaseModel):
-    """Body BE gửi tới. BE còn gửi header X-Learner-ID và Idempotency-Key."""
+    """Body BE gửi tới. BE còn gửi header X-Learner-ID và Idempotency-Key; Persona agent tự đọc theo học viên."""
     request_id: str
     chat_id: str
     lesson_id: str
     text: str = Field(min_length=1, max_length=4000)
     history: list[Turn] = Field(default_factory=list)
     selected_source_ids: list[str] = Field(default_factory=list)
-    persona: PersonaSnapshot | None = None
 
 
 class Strict(BaseModel):
@@ -43,7 +36,6 @@ class Action(Strict):
 
 class Proposal(Strict):
     id: str = Field(pattern=r"^[a-zA-Z0-9-]{1,80}$")
-    base_version: int = Field(ge=0)
     before: str = Field(max_length=2000)
     after: str = Field(max_length=2000)
 

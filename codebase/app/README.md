@@ -58,7 +58,7 @@ Browser check cần preview đang chạy, chỉ xoá cookie/localStorage của b
 
 ## Hành vi và giới hạn
 
-- Chat lưu bản text/version Persona bất biến lúc tạo. Sửa, xoá memory hoặc undo chỉ ảnh hưởng chat mới; snapshot cũ vẫn còn trong database.
+- Persona không có version hay snapshot: sửa hoặc xoá phần ghi nhớ áp dụng từ câu hỏi tiếp theo, kể cả trong chat đang mở.
 - Retry giữ ID lượt phía FE, không nhân đôi. Khóa upstream được giữ khi timeout/5xx và đổi sau lỗi contract. Chỉ retry lượt cuối; lượt lỗi cũ có thể gửi thành câu hỏi mới. Một chat xử lý một lượt tại một thời điểm. Sau restart, lượt chưa xong chuyển sang lỗi để thử lại.
 - BE chỉ kiểm tra citation thuộc manifest/locator, không đánh giá phát biểu có được nguồn hỗ trợ hay không.
 - Nội dung AI/Persona render bằng text, không thực thi HTML. Proposal chỉ được chuyển tới API accept khi học viên bấm Lưu.
