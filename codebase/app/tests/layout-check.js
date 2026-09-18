@@ -8,9 +8,6 @@ async (page) => {
     await page.setViewportSize({width, height});
     await page.evaluate(() => {
       // Deliberately exercise the combined status states that add panel height.
-      const banner = document.querySelector('#persona-banner');
-      banner.hidden = false;
-      document.querySelector('#persona-banner-text').textContent = 'Persona đã thay đổi. Áp dụng từ chat mới.';
       const error = document.querySelector('#chat-error');
       error.hidden = false;
       error.textContent = 'Mất kết nối với máy chủ. Vui lòng thử lại.';

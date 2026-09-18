@@ -1,5 +1,6 @@
 import json
 import os
+import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
@@ -33,10 +34,21 @@ class FakeLLM:
 
 
 class BasicTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
     def client(self, llm=None, key=""):
         with mock.patch.dict(os.environ, {"SERVICE_API_KEY": key}):
             return TestClient(
-                create_app(llm=llm or FakeLLM(), lessons_file=FIXTURES, env_file=None)
+                create_app(
+                    llm=llm or FakeLLM(),
+                    lessons_file=FIXTURES,
+                    env_file=None,
+                    db_path=Path(self.tmp.name) / "agent.sqlite",
+                )
             )
 
     def test_health(self):
@@ -71,8 +83,8 @@ class BasicTest(unittest.TestCase):
         )
         self.assertEqual(client.get("/health").status_code, 200)
 
-    def test_persona_not_ready(self):
-        self.assertEqual(self.client().get("/persona").status_code, 501)
+    def test_persona_needs_learner(self):
+        self.assertEqual(self.client().get("/persona").status_code, 400)
 
     def test_respond_structured_answer_with_citation(self):
         payload = json.dumps(

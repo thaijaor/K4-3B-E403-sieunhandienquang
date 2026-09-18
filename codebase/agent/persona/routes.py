@@ -1,39 +1,61 @@
-"""Persona service — TODO(Thái). Route theo bảng "Persona service" trong codebase/app/CONTRACT.md.
-Học viên lấy từ header X-Learner-ID do BE gửi. Chưa làm thì trả 501."""
-from fastapi import APIRouter, HTTPException
+"""Route Persona mà BE proxy tới (bảng "Persona service" trong codebase/app/CONTRACT.md).
+Học viên lấy từ header X-Learner-ID do BE gửi; browser không gọi thẳng service này."""
+from fastapi import APIRouter, Header, HTTPException, Request
+from pydantic import BaseModel, ConfigDict, Field
+
+from persona.store import MAX_CHARS, PersonaError
 
 router = APIRouter(prefix="/persona", tags=["persona"])
 
 
-def not_ready():
-    raise HTTPException(501, "Persona chưa làm.")
+class PersonaWrite(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    text: str = Field(max_length=MAX_CHARS)
+
+
+class Accept(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    edited_text: str | None = Field(default=None, max_length=MAX_CHARS)
+
+
+def _store(request: Request):
+    return request.app.state.persona_store
+
+
+def _learner(value):
+    if not value:
+        raise HTTPException(400, "Thiếu X-Learner-ID.")
+    return value
 
 
 @router.get("")
-def get_persona():
-    not_ready()
+def get_persona(request: Request, x_learner_id: str = Header("")):
+    return _store(request).get(_learner(x_learner_id))
 
 
 @router.put("")
-def save_persona():
-    not_ready()
+def save_persona(body: PersonaWrite, request: Request, x_learner_id: str = Header("")):
+    return _store(request).save(_learner(x_learner_id), body.text)
 
 
 @router.delete("/memory")
-def clear_memory():
-    not_ready()
-
-
-@router.post("/undo")
-def undo():
-    not_ready()
+def clear_memory(request: Request, x_learner_id: str = Header("")):
+    return _store(request).clear_memory(_learner(x_learner_id))
 
 
 @router.post("/proposals/{proposal_id}/accept")
-def accept(proposal_id: str):
-    not_ready()
+def accept(proposal_id: str, body: Accept, request: Request, x_learner_id: str = Header("")):
+    try:
+        return _store(request).accept(_learner(x_learner_id), proposal_id, body.edited_text)
+    except KeyError:
+        raise HTTPException(404, "Không tìm thấy đề xuất.")
+    except PersonaError as exc:
+        raise HTTPException(422, str(exc))
 
 
 @router.post("/proposals/{proposal_id}/reject")
-def reject(proposal_id: str):
-    not_ready()
+def reject(proposal_id: str, request: Request, x_learner_id: str = Header("")):
+    try:
+        return _store(request).reject(_learner(x_learner_id), proposal_id)
+    except KeyError:
+        raise HTTPException(404, "Không tìm thấy đề xuất.")

@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-const state = {chat: null, lesson: null, selected: [], busy: new Set(), creating: false, generation: 0, persona: null, editing: false, saving: false, undo: null, capabilities: null, navigating: false};
+const state = {chat: null, lesson: null, selected: [], busy: new Set(), creating: false, generation: 0, persona: null, editing: false, saving: false, capabilities: null, navigating: false};
 
 function node(tag, text, className) {
   const el = document.createElement(tag);
@@ -35,21 +35,8 @@ function controls() {
   $('question').disabled = !state.chat || state.creating || state.navigating;
   $('send').disabled = !state.chat || busy || !$('question').value.trim();
   $('new-chat').disabled = state.creating || state.navigating || !state.lesson;
-  $('banner-new').disabled = state.creating || state.navigating || !state.lesson;
   document.querySelectorAll('[data-lesson]').forEach(el => el.disabled = state.creating || state.navigating);
   $('compose-hint').textContent = busy ? 'Đang xử lý câu hỏi…' : 'Enter để gửi · Shift + Enter xuống dòng';
-}
-function version() {
-  const v = state.chat?.persona_version;
-  $('version').textContent = !state.chat ? 'Chưa có hội thoại' : v === null ? 'Chat này không dùng Persona' : `Chat đang dùng Persona v${v}`;
-  if (state.persona && state.chat && state.persona.version !== v) {
-    $('persona-banner').hidden = false;
-    $('persona-banner-text').textContent = `Persona hiện tại: v${state.persona.version}. Áp dụng từ chat mới.`;
-  } else {
-    $('persona-banner').hidden = !state.undo;
-    if (state.undo) $('persona-banner-text').textContent = 'Persona hiện tại đã được áp dụng cho chat này.';
-  }
-  $('undo').hidden = !state.undo;
 }
 async function loadLesson(id) {
   const lesson = await api(`/lessons/${encodeURIComponent(id)}`);
@@ -86,18 +73,17 @@ function selection() {
   $('selection-label').textContent = state.lesson?.sources.filter(s => state.selected.includes(s.id)).map(s => s.label).join(', ') || '';
   document.querySelectorAll('.source-card').forEach(el => el.classList.toggle('selected', state.selected.includes(el.dataset.source)));
 }
-async function newChat(withoutPersona = false) {
+async function newChat() {
   if (state.creating || !state.lesson) return;
   state.creating = true; const generation = ++state.generation; controls(); error('chat-error');
   try {
-    const chat = await api('/chats', 'POST', {lesson_id: state.lesson.id, without_persona: withoutPersona});
+    const chat = await api('/chats', 'POST', {lesson_id: state.lesson.id});
     if (generation !== state.generation) return;
     state.chat = chat; localStorage.setItem('tutor.chat', chat.id);
-    $('question').value = ''; state.selected = []; selection(); $('without-persona').hidden = true;
-    renderMessages(); version();
+    $('question').value = ''; state.selected = []; selection();
+    renderMessages();
   } catch (e) {
     error('chat-error', e.message);
-    $('without-persona').hidden = !state.capabilities?.persona_connected;
   } finally { state.creating = false; controls(); }
 }
 async function reloadChat(chatId) {
@@ -208,36 +194,82 @@ async function loadPersona() {
   try {
     state.persona = await api('/persona');
     $('persona-read').textContent = state.persona.text || 'Persona đang trống. Bạn có thể thêm cách xưng hô, độ dài và cách giải thích mong muốn.';
-    $('persona-status').textContent = `Phiên bản ${state.persona.version} · ${state.persona.updated_at}`;
+    $('persona-status').textContent = `Cập nhật lúc ${state.persona.updated_at}`;
     $('persona-edit').disabled = false; $('persona-clear').disabled = state.editing;
-    version();
   } catch (e) { error('persona-error', e.message); $('persona-read').textContent = state.persona?.text || 'Chưa tải được Persona.'; }
 }
-function savedPersona(result, previousVersion) {
-  state.persona = result; state.undo = {target_version: previousVersion, expected_version: result.version};
+function savedPersona(result) {
+  state.persona = result;
   $('persona-read').textContent = result.text || 'Persona đang trống.';
-  $('persona-status').textContent = `Đã lưu Persona v${result.version}. Áp dụng từ chat mới.`;
-  $('persona-banner').hidden = false; $('persona-banner-text').textContent = 'Đã cập nhật Persona. Áp dụng từ chat mới.';
-  personaMode(false); version();
+  $('persona-status').textContent = 'Đã lưu Persona. Áp dụng từ câu hỏi tiếp theo.';
+  personaMode(false);
 }
 async function mutatePersona(path, method, payload) {
   if (state.saving) return;
   state.saving = true; error('persona-error');
-  for (const id of ['persona-save', 'persona-clear', 'persona-reload', 'persona-cancel', 'undo']) $(id).disabled = true;
+  for (const id of ['persona-save', 'persona-clear', 'persona-reload', 'persona-cancel']) $(id).disabled = true;
   try {
     const result = await api(path, method, payload);
-    savedPersona(result, payload.expected_version); return result;
+    savedPersona(result); return result;
   } catch (e) { error('persona-error', e.message); throw e; }
   finally {
     state.saving = false;
-    for (const id of ['persona-save', 'persona-reload', 'persona-cancel', 'undo']) $(id).disabled = false;
+    for (const id of ['persona-save', 'persona-reload', 'persona-cancel']) $(id).disabled = false;
     $('persona-clear').disabled = state.editing || !state.persona;
   }
 }
+function lineDiff(before = '', after = '') {
+  const left = before.split('\n');
+  const right = after.split('\n');
+  const lengths = Array.from({length: left.length + 1}, () => Array(right.length + 1).fill(0));
+  for (let i = left.length - 1; i >= 0; i--) for (let j = right.length - 1; j >= 0; j--) {
+    lengths[i][j] = left[i] === right[j] ? lengths[i + 1][j + 1] + 1 : Math.max(lengths[i + 1][j], lengths[i][j + 1]);
+  }
+  const rows = []; let i = 0; let j = 0;
+  while (i < left.length || j < right.length) {
+    if (i < left.length && j < right.length && left[i] === right[j]) { rows.push({type: 'same', text: left[i]}); i++; j++; }
+    else if (j < right.length && (i === left.length || lengths[i][j + 1] >= lengths[i + 1][j])) { rows.push({type: 'add', text: right[j++]}); }
+    else rows.push({type: 'remove', text: left[i++]});
+  }
+  return rows;
+}
+function proposalDiff(before, after) {
+  const rows = lineDiff(before, after);
+  const changed = rows.map((row, index) => row.type === 'same' ? -1 : index).filter(index => index >= 0);
+  const visible = new Set(changed);
+  for (const index of changed) {
+    if (index > 0) visible.add(index - 1);
+    if (index + 1 < rows.length) visible.add(index + 1);
+    for (let cursor = index - 1; cursor >= 0; cursor--) {
+      if (rows[cursor].type === 'same' && /^#{1,2} /.test(rows[cursor].text)) { visible.add(cursor); break; }
+    }
+  }
+  const view = node('div', undefined, 'diff-view');
+  view.setAttribute('aria-label', 'Thay đổi Persona được đề xuất');
+  let skipped = false;
+  rows.forEach((row, index) => {
+    if (!visible.has(index)) {
+      const nextVisible = rows.findIndex((_, cursor) => cursor > index && visible.has(cursor));
+      if (!skipped && row.text && (nextVisible < 0 || !/^#{1,2} /.test(rows[nextVisible].text))) view.append(node('div', '⋯', 'diff-row diff-skip'));
+      skipped = true; return;
+    }
+    skipped = false;
+    const mark = row.type === 'add' ? '+' : row.type === 'remove' ? '−' : ' ';
+    const text = row.type !== 'same' && row.text.startsWith('- ') ? row.text.slice(2) : row.text;
+    const line = node('div', undefined, `diff-row diff-${row.type}`);
+    line.append(node('span', mark, 'diff-mark'), node('span', text || ' ', 'diff-text'));
+    view.append(line);
+  });
+  const added = rows.filter(row => row.type === 'add').length;
+  const removed = rows.filter(row => row.type === 'remove').length;
+  const summary = removed && added ? `Thay ${Math.max(removed, added)} dòng` : added ? `Thêm ${added} dòng` : `Xoá ${removed} dòng`;
+  return {summary, view};
+}
 function proposalCard(proposal) {
   const card = node('section', undefined, 'proposal'); card.append(node('h3', 'Tutor đề xuất ghi nhớ'));
-  card.append(node('span', 'Trước', 'diff-label'), node('pre', proposal.before || '(trống)', 'diff-before'), node('span', 'Sau', 'diff-label'), node('pre', proposal.after || '(trống)', 'diff-after'));
-  if (proposal.status && proposal.status !== 'pending') {card.append(node('p', proposal.status === 'accepted' ? 'Đã lưu · Áp dụng từ chat mới' : 'Đã bỏ qua đề xuất', 'proposal-status')); return card;}
+  const diff = proposalDiff(proposal.before || '', proposal.after || '');
+  card.append(node('p', diff.summary, 'diff-summary'), diff.view);
+  if (proposal.status && proposal.status !== 'pending') {card.append(node('p', proposal.status === 'accepted' ? 'Đã lưu vào Persona' : 'Đã bỏ qua đề xuất', 'proposal-status')); return card;}
   const label = node('label', 'Sửa đề xuất trước khi lưu', 'small');
   const draft = node('textarea'); draft.value = proposal.after; draft.maxLength = 2000; draft.rows = 5;
   draft.id = `proposal-${proposal.id}`; label.htmlFor = draft.id; label.hidden = draft.hidden = true; card.append(label, draft);
@@ -246,9 +278,8 @@ function proposalCard(proposal) {
   const accept = button('Lưu', async () => {
     actions.querySelectorAll('button').forEach(b => b.disabled = true);
     try {
-      const result = await api(`/persona/proposals/${proposal.id}/accept`, 'POST', {expected_version: proposal.base_version, edited_text: draft.hidden ? null : draft.value});
-      savedPersona(result, proposal.base_version); proposal.status = 'accepted'; actions.remove(); draft.hidden = label.hidden = true; status.textContent = 'Đã cập nhật Persona · Áp dụng từ chat mới';
-      status.append(button('Hoàn tác', () => undoPersona({target_version: proposal.base_version, expected_version: result.version}), 'text-button'));
+      const result = await api(`/persona/proposals/${proposal.id}/accept`, 'POST', {edited_text: draft.hidden ? null : draft.value});
+      savedPersona(result); proposal.status = 'accepted'; actions.remove(); draft.hidden = label.hidden = true; status.textContent = 'Đã cập nhật Persona · Áp dụng từ câu hỏi tiếp theo';
     } catch (e) { status.textContent = e.message; actions.querySelectorAll('button').forEach(b => b.disabled = false); }
   }, 'primary');
   const edit = button('Sửa', () => {draft.hidden = label.hidden = false; draft.focus();});
@@ -258,16 +289,10 @@ function proposalCard(proposal) {
     catch (e) {status.textContent = e.message; actions.querySelectorAll('button').forEach(b => b.disabled = false);}
   }); actions.append(accept, edit, reject); card.append(actions, status); return card;
 }
-async function undoPersona(operation = state.undo) {
-  if (!operation) return;
-  try {await mutatePersona('/persona/undo', 'POST', operation); state.undo = null; version();}
-  catch (e) {error('chat-error', e.message);}
-}
 $('composer').addEventListener('submit', e => {e.preventDefault(); send();});
 $('question').addEventListener('input', controls);
 $('question').addEventListener('keydown', e => {if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {e.preventDefault(); send();}});
-$('new-chat').addEventListener('click', () => newChat()); $('banner-new').addEventListener('click', () => newChat());
-$('without-persona').addEventListener('click', () => newChat(true));
+$('new-chat').addEventListener('click', () => newChat());
 $('clear-selection').addEventListener('click', () => {state.selected = []; selection();});
 function setTutor(open) {
   $('tutor-panel').hidden = !open;
@@ -328,8 +353,8 @@ $('history-open').addEventListener('click', async () => {
           const restored = await api(`/chats/${encodeURIComponent(chat.id)}`);
           await loadLesson(restored.lesson_id); state.chat = restored; ++state.generation;
           localStorage.setItem('tutor.chat', restored.id); $('question').value = '';
-          error('chat-error'); $('without-persona').hidden = true;
-          renderMessages(); version(); $('history-dialog').close(); setTutor(true);
+          error('chat-error');
+          renderMessages(); $('history-dialog').close(); setTutor(true);
         } catch (e) {item.append(node('p', e.message, 'error'));}
         finally {state.navigating = false; controls();}
       }, 'history-item');
@@ -352,9 +377,8 @@ $('persona-edit').addEventListener('click', () => personaMode(true));
 $('persona-cancel').addEventListener('click', () => {personaMode(false); error('persona-error');});
 $('persona-text').addEventListener('input', countPersona);
 $('persona-reload').addEventListener('click', loadPersona);
-$('persona-save').addEventListener('click', () => mutatePersona('/persona', 'PUT', {text: $('persona-text').value, expected_version: state.persona.version}).catch(() => {}));
-$('persona-clear').addEventListener('click', () => {if (confirm('Xoá phần “Tutor nhớ về bạn” khỏi Persona hiện tại? Chat cũ vẫn giữ snapshot.')) mutatePersona('/persona/memory', 'DELETE', {expected_version: state.persona.version}).catch(() => {});});
-$('undo').addEventListener('click', () => undoPersona());
+$('persona-save').addEventListener('click', () => mutatePersona('/persona', 'PUT', {text: $('persona-text').value}).catch(() => {}));
+$('persona-clear').addEventListener('click', () => {if (confirm('Xoá phần “Tutor nhớ về bạn” khỏi Persona?')) mutatePersona('/persona/memory', 'DELETE').catch(() => {});});
 $('source-close').addEventListener('click', () => $('source-dialog').close());
 
 async function start() {
@@ -374,7 +398,7 @@ async function start() {
       catch (e) {if (e.status === 404) localStorage.removeItem('tutor.chat'); else throw e;}
     }
     await loadLesson(state.chat?.lesson_id || lessons[0].id);
-    if (state.chat) {renderMessages(); version(); controls();} else await newChat();
+    if (state.chat) {renderMessages(); controls();} else await newChat();
   } catch (e) {error('chat-error', e.message); $('connection').textContent = 'Không mở được phiên học. Tải lại trang để thử lại.';}
 }
 // Recover a pending turn after a reload without issuing a second AI request.

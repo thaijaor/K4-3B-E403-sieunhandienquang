@@ -7,20 +7,21 @@ from pathlib import Path
 
 import openai
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from agent import respond
 from lessons import load_lessons
 from llm import LLM
 from persona.routes import router as persona_router
+from persona.store import PersonaStore
 from schemas import AIReply, RespondRequest
 
 HERE = Path(__file__).parent
 LOG = logging.getLogger("agent")
 
 
-def create_app(llm=None, lessons_file=None, env_file=HERE / ".env"):
+def create_app(llm=None, lessons_file=None, env_file=HERE / ".env", db_path=None):
     if env_file:
         load_dotenv(env_file)
     lessons_env = os.getenv("LESSONS_FILE", "").strip()
@@ -30,6 +31,7 @@ def create_app(llm=None, lessons_file=None, env_file=HERE / ".env"):
     service_key = os.getenv("SERVICE_API_KEY", "")
 
     app = FastAPI(title="VLearn Tutor agent", docs_url=None, redoc_url=None)
+    app.state.persona_store = PersonaStore(db_path or os.getenv("AGENT_DB", HERE / "data" / "agent.sqlite"))
 
     @app.middleware("http")
     async def check_service_key(request: Request, call_next):
@@ -45,13 +47,13 @@ def create_app(llm=None, lessons_file=None, env_file=HERE / ".env"):
         return {"status": "ok", "model": llm.model, "lessons": len(lessons)}
 
     @app.post("/respond", response_model=AIReply)
-    def respond_route(body: RespondRequest):
+    def respond_route(body: RespondRequest, x_learner_id: str = Header("")):
         lesson = lessons.get(body.lesson_id)
         if not lesson:
             raise HTTPException(404, "Không tìm thấy bài.")
         started = time.monotonic()
         try:
-            reply = respond(body, lesson, llm)
+            reply = respond(body, lesson, llm, x_learner_id, app.state.persona_store)
         except openai.APITimeoutError:
             raise HTTPException(504, "Model phản hồi quá lâu.")
         except openai.APIError:

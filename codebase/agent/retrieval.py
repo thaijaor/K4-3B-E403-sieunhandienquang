@@ -61,7 +61,7 @@ def search_sources(
     top_k: int = 3,
 ) -> list[dict[str, Any]]:
     """Tìm top_k đoạn nguồn liên quan nhất trong bài học.
-    
+
     Ưu tiên các đoạn học viên đã chọn (selected_ids), sau đó xếp hạng bằng BM25.
     """
     if not sources:

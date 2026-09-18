@@ -19,7 +19,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from integrations import Services, ContractError
 from lessons import load_lessons
-from models import Accept, AIReply, NewChat, Persona, PersonaWrite, Question, Undo, Version
+from models import Accept, AIReply, NewChat, Persona, PersonaWrite, Question
 
 HERE = Path(__file__).parent
 LOG = logging.getLogger("tutor")
@@ -59,8 +59,7 @@ def create_app(db_path=None, services=None, lessons_path=None):
         db.executescript("""
         CREATE TABLE IF NOT EXISTS sessions (owner TEXT PRIMARY KEY, expires REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS chats (
-            id TEXT PRIMARY KEY, owner TEXT NOT NULL, lesson_id TEXT NOT NULL,
-            persona TEXT NOT NULL, created_at REAL NOT NULL);
+            id TEXT PRIMARY KEY, owner TEXT NOT NULL, lesson_id TEXT NOT NULL, created_at REAL NOT NULL);
         CREATE TABLE IF NOT EXISTS turns (
             id TEXT PRIMARY KEY, chat_id TEXT NOT NULL REFERENCES chats(id),
             request_id TEXT NOT NULL, input TEXT NOT NULL, status TEXT NOT NULL,
@@ -72,6 +71,9 @@ def create_app(db_path=None, services=None, lessons_path=None):
             id TEXT PRIMARY KEY, owner TEXT NOT NULL, chat_id TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'pending');
         """)
+        # Database cũ còn cột snapshot Persona; Persona giờ đọc trực tiếp từ agent mỗi lượt.
+        if any(column["name"] == "persona" for column in db.execute("PRAGMA table_info(chats)")):
+            db.execute("ALTER TABLE chats DROP COLUMN persona")
         # One server process only: interrupted requests are retryable after restart.
         db.execute("UPDATE turns SET status='failed', error='Máy chủ vừa khởi động lại. Vui lòng thử lại.' WHERE status='pending'")
 
@@ -151,13 +153,10 @@ def create_app(db_path=None, services=None, lessons_path=None):
     def new_chat(body: NewChat, user=Depends(owner)):
         if body.lesson_id not in lesson_map:
             raise HTTPException(404, "Không tìm thấy bài.")
-        snapshot = None
-        if services.persona_url and not body.without_persona:
-            snapshot = persona_call("GET", "/persona", user)
         chat_id = str(uuid.uuid4())
         with connect() as db:
-            db.execute("INSERT INTO chats VALUES (?,?,?,?,?)", (chat_id, user, body.lesson_id, json.dumps(snapshot, ensure_ascii=False), time.time()))
-        return {"id": chat_id, "lesson_id": body.lesson_id, "persona_version": snapshot["version"] if snapshot else None, "messages": []}
+            db.execute("INSERT INTO chats VALUES (?,?,?,?)", (chat_id, user, body.lesson_id, time.time()))
+        return {"id": chat_id, "lesson_id": body.lesson_id, "messages": []}
 
     @app.get("/api/chats")
     def list_chats(user=Depends(owner)):
@@ -180,8 +179,7 @@ def create_app(db_path=None, services=None, lessons_path=None):
                 for proposal in reply["persona_proposals"]:
                     proposal["status"] = proposal_states.get(proposal["id"], "pending")
                 messages.append({"role": "assistant", **reply})
-        snapshot = json.loads(chat["persona"])
-        return {"id": chat_id, "lesson_id": chat["lesson_id"], "persona_version": snapshot["version"] if snapshot else None, "messages": messages}
+        return {"id": chat_id, "lesson_id": chat["lesson_id"], "messages": messages}
 
     @app.post("/api/chats/{chat_id}/messages")
     def message(chat_id: str, body: Question, user=Depends(owner)):
@@ -215,7 +213,7 @@ def create_app(db_path=None, services=None, lessons_path=None):
             history = []
             for previous in completed:
                 history.extend([{"role": "user", "text": json.loads(previous["input"])["text"]}, {"role": "assistant", "text": json.loads(previous["result"])["text"]}])
-            result = services.request("ai", "POST", "/respond", user, {"request_id": ai_key, "chat_id": chat_id, "lesson_id": chat["lesson_id"], "text": body.text, "history": history, "selected_source_ids": body.selected_source_ids, "persona": json.loads(chat["persona"])}, ai_key)
+            result = services.request("ai", "POST", "/respond", user, {"request_id": ai_key, "chat_id": chat_id, "lesson_id": chat["lesson_id"], "text": body.text, "history": history, "selected_source_ids": body.selected_source_ids}, ai_key)
             reply = AIReply.model_validate(result)
             if reply.decision == "answer" and not reply.citations:
                 raise ValueError("Answer without citation")
@@ -225,8 +223,8 @@ def create_app(db_path=None, services=None, lessons_path=None):
             for action in reply.actions:
                 if action.type == "open_source" and (action.value not in sources or sources[action.value][0] != chat["lesson_id"]):
                     raise ValueError("Invalid source action")
-            if reply.persona_proposals and not services.persona_url:
-                raise ValueError("Persona proposal without service")
+            if not services.persona_url:
+                reply.persona_proposals = []  # không có Persona service thì không có chỗ lưu đề xuất
             response = reply.model_dump()
             response["message_id"] = turn_id
             response["request_id"] = body.client_request_id
@@ -265,12 +263,8 @@ def create_app(db_path=None, services=None, lessons_path=None):
         return persona_call("PUT", "/persona", user, body.model_dump())
 
     @app.delete("/api/persona/memory")
-    def clear_memory(body: Version, user=Depends(owner)):
-        return persona_call("DELETE", "/persona/memory", user, body.model_dump())
-
-    @app.post("/api/persona/undo")
-    def undo(body: Undo, user=Depends(owner)):
-        return persona_call("POST", "/persona/undo", user, body.model_dump())
+    def clear_memory(user=Depends(owner)):
+        return persona_call("DELETE", "/persona/memory", user)
 
     def check_proposal(proposal_id, user):
         with connect() as db:

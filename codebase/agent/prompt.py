@@ -1,4 +1,5 @@
-"""System prompt cơ bản + ghép messages. Hỗ trợ 4 quyết định và trích dẫn theo CONTRACT."""
+"""System prompt: 4 quyết định, nguồn tham khảo và Persona."""
+from persona.tools import persona_block
 
 SYSTEM_PROMPT = """Bạn là Trợ giảng AI trên VLearn, giúp học viên hiểu bài đang mở.
 
@@ -26,38 +27,31 @@ BẮT BUỘC TRẢ VỀ DUY NHẤT MỘT ĐỐI TƯỢNG JSON theo đúng cấu 
 
 
 def lesson_block(lesson):
-    outline = "\n".join(f"- {source['title']} ({source['id']})" for source in lesson.get("sources", []))
+    outline = "\n".join(
+        f"- {source['title']} ({source['id']})" for source in lesson.get("sources", [])
+    )
     return f"<bai_hoc>\nTên bài: {lesson.get('title', '')}\nCác mục:\n{outline}\n</bai_hoc>"
 
 
 def sources_block(sources):
     if not sources:
         return ""
-    items = []
-    for s in sources:
-        items.append(
-            f'<doan_trich id="{s["id"]}" tieu_de="{s.get("title", "")}">\n{s.get("text", "")}\n</doan_trich>'
-        )
+    items = [
+        f'<doan_trich id="{source["id"]}" tieu_de="{source.get("title", "")}">\n'
+        f'{source.get("text", "")}\n</doan_trich>'
+        for source in sources
+    ]
     joined = "\n\n".join(items)
     return f"<tai_lieu_tham_khao>\n{joined}\n</tai_lieu_tham_khao>"
 
 
-def persona_block(persona):
-    """TODO(Thái): đưa Persona vào prompt theo README § Persona. Hiện chưa dùng."""
-    return ""
-
-
-def build_messages(request, lesson, relevant_sources=None):
+def build_messages(request, lesson, relevant_sources=None, persona=None):
     parts = [SYSTEM_PROMPT, lesson_block(lesson)]
     if relevant_sources:
         parts.append(sources_block(relevant_sources))
-    if getattr(request, "persona", None):
-        p_block = persona_block(request.persona)
-        if p_block:
-            parts.append(p_block)
-
-    system = "\n\n".join(parts)
-    messages = [{"role": "system", "content": system}]
+    if persona:
+        parts.append(persona_block(persona))
+    messages = [{"role": "system", "content": "\n\n".join(part for part in parts if part)}]
     messages += [{"role": turn.role, "content": turn.text} for turn in request.history]
     messages.append({"role": "user", "content": request.text})
     return messages

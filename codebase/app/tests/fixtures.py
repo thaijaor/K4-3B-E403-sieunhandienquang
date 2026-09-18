@@ -16,7 +16,6 @@ class FakeServices:
         self.lessons = {x["id"]: x for x in load_lessons(Path(__file__).parents[1] / "lessons.sample.json")}
         self.calls = []
         self.personas = {}
-        self.versions = {}
         self.proposals = {}
         self.failure = None
         self.reply_override = None
@@ -25,8 +24,7 @@ class FakeServices:
 
     def current(self, owner):
         if owner not in self.personas:
-            self.personas[owner] = {"text": "# PERSONA — Tutor của tôi\n\n## Tính cách Tutor\n- Xưng hô: mình – bạn\n\n## Tutor nhớ về bạn\n\n## Không được nhớ\n", "version": 1, "updated_at": "Fixture UI"}
-            self.versions[owner] = {1: self.personas[owner]["text"]}
+            self.personas[owner] = {"text": "# PERSONA — Tutor của tôi\n\n## Tính cách Tutor\n- Xưng hô: mình – bạn\n\n## Tutor nhớ về bạn\n", "updated_at": "Fixture UI"}
         return self.personas[owner]
 
     def request(self, kind, method, path, owner, payload=None, request_id=None):
@@ -51,7 +49,7 @@ class FakeServices:
                 before = current["text"]
                 if "## Tutor nhớ về bạn\n" not in before:
                     before += "\n\n## Tutor nhớ về bạn\n"
-                proposal = {"id": str(uuid.uuid4()), "base_version": current["version"], "before": current["text"], "after": before.replace("## Tutor nhớ về bạn\n", "## Tutor nhớ về bạn\n- Ưu tiên ví dụ dễ hiểu (fixture)\n", 1)}
+                proposal = {"id": str(uuid.uuid4()), "before": current["text"], "after": before.replace("## Tutor nhớ về bạn\n", "## Tutor nhớ về bạn\n- Ưu tiên ví dụ dễ hiểu (fixture)\n", 1)}
                 self.proposals[proposal["id"]] = (owner, proposal)
                 result["persona_proposals"] = [proposal]
             return result
@@ -60,20 +58,14 @@ class FakeServices:
             return copy.deepcopy(current)
         if path.endswith("/reject"):
             return {"status": "rejected"}
-        if payload["expected_version"] != current["version"]:
-            raise HTTPException(409, "Phiên bản đã thay đổi. Tải lại bản mới và đối chiếu bản nháp.")
         if path.endswith("/accept"):
             proposal_owner, proposal = self.proposals[path.split("/")[-2]]
             if owner != proposal_owner:
                 raise HTTPException(404, "Proposal not found")
             text = payload.get("edited_text") if payload.get("edited_text") is not None else proposal["after"]
-        elif path.endswith("/undo"):
-            text = self.versions[owner][payload["target_version"]]
         elif path.endswith("/memory"):
-            text = "# PERSONA — Tutor của tôi\n\n## Tính cách Tutor\n- Xưng hô: mình – bạn\n\n## Tutor nhớ về bạn\n\n## Không được nhớ\n"
+            text = "# PERSONA — Tutor của tôi\n\n## Tính cách Tutor\n- Xưng hô: mình – bạn\n\n## Tutor nhớ về bạn\n"
         else:
             text = payload["text"]
-        updated = {"text": text, "version": current["version"] + 1, "updated_at": "Fixture UI"}
-        self.personas[owner] = updated
-        self.versions[owner][updated["version"]] = text
-        return copy.deepcopy(updated)
+        self.personas[owner] = {"text": text, "updated_at": "Fixture UI"}
+        return copy.deepcopy(self.personas[owner])
