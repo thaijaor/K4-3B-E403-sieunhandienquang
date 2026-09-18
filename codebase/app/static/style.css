@@ -19,9 +19,12 @@ a{color:var(--blue)}
 .avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#e7f0f7;color:var(--blue);font-size:12px;font-weight:bold}
 .connection{padding:8px 36px;background:#edf3f8;color:#45647c;font-size:12px;border-bottom:1px solid var(--line)}
 .workspace{display:grid;grid-template-columns:260px minmax(0,1fr);gap:0;width:100%;min-height:0;overflow:hidden;position:relative}
-.workspace.chat-open{grid-template-columns:240px minmax(0,1fr) var(--tutor-w,400px)}
+.workspace.chat-open{grid-template-columns:240px minmax(0,1fr) minmax(340px,400px)}
 .workspace.sidebar-hidden{grid-template-columns:minmax(0,1fr)}
-.workspace.sidebar-hidden.chat-open{grid-template-columns:minmax(0,1fr) var(--tutor-w,400px)}
+.workspace.sidebar-hidden.chat-open{grid-template-columns:minmax(0,1fr) minmax(340px,400px)}
+/* Only after the learner drags the panel edge; otherwise the defaults above apply. */
+.workspace.tutor-sized.chat-open{grid-template-columns:240px minmax(0,1fr) var(--tutor-w)}
+.workspace.tutor-sized.sidebar-hidden.chat-open{grid-template-columns:minmax(0,1fr) var(--tutor-w)}
 .lesson{min-width:0;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:28px clamp(20px,4vw,64px);scrollbar-gutter:stable}
 .eyebrow{font-size:10px;letter-spacing:1.8px;font-weight:750;color:var(--blue);margin-bottom:12px}
 .lesson select{padding:8px 10px;margin-bottom:20px;max-width:100%;border:1px solid var(--line);border-radius:7px;background:white;color:var(--muted);font-size:12px}
@@ -123,13 +126,15 @@ textarea::placeholder{color:#8194a3}
 .history-item{display:flex;flex-direction:column;align-items:start;gap:6px;text-align:left;background:#f3f7fb;color:var(--blue);border-color:var(--line)}
 .chat-status{max-height:24%}
 @media(max-width:1100px){
- .workspace.chat-open{grid-template-columns:190px minmax(0,1fr) var(--tutor-w,340px)}
+ .workspace.chat-open{grid-template-columns:190px minmax(0,1fr) 340px}
+ .workspace.tutor-sized.chat-open{grid-template-columns:190px minmax(0,1fr) var(--tutor-w)}
  .lesson{padding:22px}.source-card{padding:20px}
  .topbar{padding:0 22px;gap:20px}
  h1{font-size:26px}
 }
 @media(min-width:721px) and (max-width:950px){
- .workspace.chat-open{grid-template-columns:minmax(0,1fr) var(--tutor-w,340px)}
+ .workspace.chat-open{grid-template-columns:minmax(0,1fr) 340px}
+ .workspace.tutor-sized.chat-open{grid-template-columns:minmax(0,1fr) var(--tutor-w)}
  .workspace.chat-open .lesson-sidebar{position:absolute;left:0;top:0;bottom:0;width:250px;z-index:3;box-shadow:8px 0 24px #15304720}
  .workspace.chat-open .lesson{grid-column:1}
 }
