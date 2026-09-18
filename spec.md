@@ -1,4 +1,4 @@
-# AI SPEC — Trả lời · hỏi lại · từ chối có citation · Nhóm sieunhandienquang · E403
+# AI SPEC — Tutor nhớ cách trả lời học viên muốn (Persona) · Nhóm sieunhandienquang · E403
 Hướng: [x] A — VLearn  [ ] B — Trợ lý Học viên  [ ] C — Làn mở
 Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 
@@ -6,27 +6,27 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 > Mục ghi *(chưa chốt)* là phần còn thiếu, cần điền trước CP4 (21:00 18/9).
 
 ## §1. User & Job
-- **Job executor + workflow:** học viên K4 đang đọc một bài trên VLearn → gặp điểm chưa hiểu → hỏi Tutor ngay trong bài đang mở → đọc trả lời → mở nguồn để kiểm chứng → đọc tiếp.
-- **Core JTBD:** Khi đang đọc bài và gặp chỗ chưa hiểu, tôi muốn được giải thích ngắn, đúng ý và chỉ ra chỗ trong bài để kiểm lại, để hiểu đúng mà không phải rời bài.
-- **Problem statement:** Khi hỏi để hiểu bài đang mở, học viên nhận câu trả lời thiếu citation hoặc dài hơn cần thiết nên khó kiểm chứng, phải tự dò lại slide và có nguy cơ học sai.
+- **Job executor + workflow:** học viên K4 đang đọc một bài trên VLearn → gặp điểm chưa hiểu → hỏi Tutor ngay trong bài đang mở → nhận câu trả lời dài, chung cho mọi người → gõ thêm "ngắn gọn thôi" / "dễ hiểu hơn" / "cho ví dụ" → câu sau, chat sau lại phải dặn lại.
+- **Core JTBD:** Khi đang đọc bài và gặp chỗ chưa hiểu, tôi muốn được giải thích theo đúng cách mình dễ hiểu mà không phải dặn lại mỗi lần, để hiểu nhanh và học tiếp.
+- **Problem statement:** Khi hỏi để hiểu bài đang mở, học viên phải nhắc đi nhắc lại cách trả lời mình muốn (ngắn gọn, dễ hiểu, có ví dụ); không nhắc thì nhận câu trả lời dài, chung cho mọi người, phải hỏi thêm lượt nữa mới hiểu.
 - **Evidence:**
-  - **Chatlog:** 838/2.555 lượt K4 không phải preset có `has_citation = False` (32,8%). Cách đếm: lọc `cohort_hint = K4`, `is_preset = False`, đếm `has_citation != True`. Ví dụ `T10311`, `T11098`.
+  - **Nhắc lại kiểu trả lời** (chatlog, regex, cần đọc tay kiểm lại): 43 lượt đòi "ngắn gọn", 37 lượt "dễ hiểu hơn", 92 lượt "chi tiết hơn"; 9–14 học viên lặp lại cùng yêu cầu ≥2 lần. *(chưa chốt: số sau khi đọc tay, mã hội thoại ví dụ)*
   - **Test Tutor:** 14/16 câu trả lời vượt ngân sách độ dài theo loại câu hỏi. Cách đếm: mở chat mới cho từng câu, đếm số từ, so với ngưỡng 30–180 từ. Ví dụ `V01`, `V02`, `V08`, `V13`.
-  - **Nhắc lại kiểu trả lời** (regex, cần đọc tay kiểm lại): 43 lượt đòi "ngắn gọn", 37 lượt "dễ hiểu hơn", 92 lượt "chi tiết hơn"; 9–14 học viên lặp lại cùng yêu cầu ≥2 lần.
-  - **Khảo sát:** form *Khảo sát trải nghiệm VLearn Tutor*; ≥11 học viên ngoài nhóm đồng ý dùng thử. *(chưa chốt: n, % xác nhận pain)*
+  - **Chatlog — citation:** 838/2.555 lượt K4 không phải preset có `has_citation = False` (32,8%). Cách đếm: lọc `cohort_hint = K4`, `is_preset = False`, đếm `has_citation != True`. Ví dụ `T10311`, `T11098`. Lý do giữ citation là điều kiện bắt buộc của mọi câu trả lời.
+  - **Khảo sát:** form *Khảo sát trải nghiệm VLearn Tutor* có 2 câu về việc phải nhắc lại cách trả lời và nhu cầu được ghi nhớ; ≥11 học viên ngoài nhóm đồng ý dùng thử. *(chưa chốt: n, % xác nhận pain)*
   - **≥5 quote nguyên văn + nguồn:** *(chưa chốt)*
 
 ## §2. Impact & quyết định chọn
 - Bảng impact ≥3 ứng viên: *(chưa chốt)*
 - Ứng viên đã loại + vì sao: *(chưa chốt)*
-- **Ứng viên chọn:** câu trả lời thiếu citation / dài quá cỡ — 32,8% lượt K4 không có citation, 14/16 câu test vượt ngân sách độ dài.
+- **Ứng viên chọn:** học viên phải nhắc lại cách trả lời muốn — 172 lượt đòi đổi kiểu trả lời, 9–14 học viên lặp lại ≥2 lần; 14/16 câu test vượt ngân sách độ dài khi không dặn.
 
 ## §3. Giải pháp tương tự đã nghiên cứu
 *(chưa chốt)*
 
 ## §4. Thiết kế
-- **Lát cắt một câu:** Khi một học viên đang đọc bài trên VLearn cần làm rõ một nội dung, AI quyết định **trả lời, hỏi lại hay từ chối** dựa trên bằng chứng của bài đang mở, để học viên nhận câu trả lời ngắn nhất nhưng đủ ý và có citation mở được.
-- **Mở rộng — Persona:** Tutor ghi nhớ nền tảng và kiểu trả lời học viên mong muốn trong PERSONA.md (học viên và Tutor cùng sửa được) để chọn độ dài, cách giải thích và bớt hỏi lại thừa. Làm sau khi lõi chạy.
+- **Lát cắt một câu:** Khi một học viên đang đọc bài trên VLearn hỏi để làm rõ một nội dung, AI dựa trên **Persona** của học viên và bằng chứng trong bài đang mở để quyết định **trả lời theo đúng cách học viên đã chọn, hỏi lại hay từ chối**, để học viên nhận câu trả lời vừa ý, có citation mở được mà không phải dặn lại.
+- **Persona (PERSONA.md):** văn bản ngắn ghi nền tảng và kiểu trả lời học viên muốn; học viên và Tutor cùng sửa được.
   - Persona gồm 3 mục: *Tính cách Tutor* (học viên đặt) · *Tutor nhớ về bạn* (Tutor ghi khi học viên đồng ý) · *Không được nhớ* (học viên tự thêm). Tối đa 2.000 ký tự.
   - Chat chụp snapshot Persona lúc tạo; sửa Persona chỉ áp dụng từ **chat mới**.
   - Tutor chỉ **đề xuất** thay đổi kèm diff `[Lưu] [Sửa] [Không]`; không tự ghi. Sau khi lưu có `Hoàn tác`.
@@ -73,7 +73,8 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 | Học viên báo "Chưa đúng ý" | ④ Domain | Hỏi lại chỗ chưa đúng, trả lời lại có citation | G9 |
 
 ## §6. Bốn đường đi của trải nghiệm
-- **Happy path:** "Temperature là gì?" → trả lời ngắn + citation mở được đoạn nguồn.
+- **Happy path:** Persona ghi "ngắn gọn, có ví dụ" → mở chat mới hỏi "Temperature là gì?" → trả lời ngắn kèm ví dụ + citation mở được, không cần dặn.
+- **Ghi nhớ:** học viên gõ "ngắn gọn thôi" → Tutor trả lời ngắn và đề xuất ghi vào Persona kèm diff → học viên bấm `Lưu` → chat mới tự trả lời ngắn.
 - **Low-confidence (②):** "Giải thích đoạn này" → hỏi lại bằng lựa chọn (tóm tắt / dễ hiểu kèm ví dụ / chi tiết).
 - **Failure / không căn cứ (①):** "Kill switch là gì?" → nói rõ bài không có + gợi ý bước tiếp.
 - **Correction:** "Chưa đúng ý" → hỏi lại chỗ chưa đúng rồi trả lời lại; hoặc bấm `Ngắn hơn` / `Có ví dụ`.
@@ -84,7 +85,7 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 - **Chiều chất lượng** *(đề xuất — chưa chốt)*:
   - **Citation đúng:** mọi khẳng định trace được về đoạn nguồn được cite (pass/fail).
   - **Quyết định đúng:** trả lời / hỏi lại / từ chối khớp nhãn mong đợi của case.
-  - **Đúng cỡ:** độ dài trong ngân sách theo loại câu hỏi (30–180 từ, như cách đếm ở §1).
+  - **Đúng kiểu:** độ dài và cách giải thích khớp Persona; Persona trống thì trong ngân sách theo loại câu hỏi (30–180 từ, như cách đếm ở §1).
 - **Golden set:** `eval/` — ≥20 case, ≥2 case mỗi lớp ở §5, ≥10 case từ chatlog thật (ghi mã hội thoại, không dán nguyên văn dài). *(chưa chốt)*
 - **Quality bar:** "Đạt khi ≥ ___% qua bộ, và ___" *(chưa chốt — khoá lúc 21:00 18/9)*
 - **Kết quả các lượt chạy:** *(chưa có)*
@@ -103,3 +104,4 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 | 17/9 20:56 | Thêm **mở rộng Persona** vào lát cắt; câu lát cắt chính giữ nguyên bản CP1 (PR #3) | Học viên phải nhắc lại kiểu trả lời: 43 "ngắn gọn", 37 "dễ hiểu hơn", 92 "chi tiết hơn"; 9–14 người lặp ≥2 lần |
 | 18/9 09:42 | FE/BE ứng dụng Tutor + UI Persona; AI và Persona là service riêng nối qua contract (PR #4, đang review) | Tách ranh giới để build song song |
 | 18/9 11:20 | Đổi UI theo layout VLearn: cột bài học bên trái, panel AI mở bằng nút; demo chỉ bài Markdown mock | Giống trải nghiệm VLearn học viên đang dùng; không đưa học liệu thật lên repo công khai |
+| 18/9 12:00 | Đổi pain và lát cắt: Persona thành trung tâm thay vì phần mở rộng; citation giữ là điều kiện bắt buộc của câu trả lời | Nỗi đau rõ nhất là phải nhắc lại cách trả lời (172 lượt, 9–14 học viên lặp ≥2 lần); canvas CP1 giữ nguyên để đối chiếu |
