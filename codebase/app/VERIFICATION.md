@@ -8,7 +8,7 @@ Nhánh `feat/tutor-app`, worktree `tutor-app`. Chỉ sửa `codebase/app/`; khô
 | Retry và exception | Khóa đổi sau lỗi contract/JSON, khóa giữ sau timeout, khóa mới tồn tại qua restart, không retry lượt cũ, lỗi bất ngờ và SQLite khóa cả lúc hoàn tất/lúc dọn | Pass với lỗi chủ động chèn |
 | Danh sách chat | Owner isolation, thứ tự mới nhất trước | Pass |
 | Markdown | 6 bài, 3 Day, IDs duy nhất, nguồn/locator khớp file và anchor, preview trả citation hợp lệ ở mọi bài | Pass |
-| Chat và Persona UI | `tests/browser-check.js`: refresh, sửa Persona, accept/reject/edit proposal, clear, network retry, phản hồi muộn, drawer và focus | 23 kiểm tra pass |
+| Chat và Persona UI | `tests/browser-check.js`: refresh, sửa Persona, ghi nhớ tự động + hoàn tác, clear, network retry, phản hồi muộn, drawer và focus | 23 kiểm tra pass |
 | Yêu cầu UI trong review | `tests/review-check.js`: ẩn/mở/đóng/thu gọn chat, vùng đọc mở rộng, sidebar/accordion/active label, 6 bài và citation, lịch sử chat, mobile | 43 kiểm tra pass |
 | Bố cục | `tests/layout-check.js`: bounding rect + hit-test và cuộn thực | 10 viewport pass |
 | Cú pháp | `node --check codebase/app/static/app.js`, Python compileall, `git diff --check` | Pass |

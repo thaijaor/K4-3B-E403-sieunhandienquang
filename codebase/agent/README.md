@@ -2,7 +2,7 @@
 
 Service AI riêng mà backend (`codebase/app`) gọi qua `POST /respond`. Service này cũng chứa luôn Persona.
 
-**Hiện trạng:** gọi được model thật với system prompt cơ bản; Persona đã xong (store, route, đưa vào prompt, tool đề xuất ghi nhớ). Mọi câu vẫn trả `decision: "chat"` — chưa đọc nội dung bài, chưa citation/clarify (phần của Tùng).
+**Hiện trạng:** pipeline CP3 (BM25, citation guard, 4 quyết định) + Persona tự ghi nhớ / quên có hoàn tác.
 
 > Thiết kế và tool dưới đây là **đề xuất**. Người làm tự xem xét, đổi tên, gộp, tách hoặc viết lại nếu thấy hợp lý hơn — chỉ cần giữ đúng contract với backend (`codebase/app/CONTRACT.md`) và cập nhật lại README này.
 
@@ -30,7 +30,7 @@ Test: `cd codebase/agent` rồi `..\..\.venv\Scripts\python.exe -m unittest disc
 | `lessons.py` | Đọc manifest; mỗi H2 `## Tên {#anchor}` là một đoạn nguồn. Giữ khớp `codebase/app/lessons.py` | chung |
 | `prompt.py` | System prompt cơ bản + ghép messages | Tùng (flow), Thái (`persona_block`) |
 | `agent.py` | Xử lý một lượt — hiện gọi LLM 1 lần | Tùng |
-| `persona/` | Store SQLite, 5 route Persona, tool `propose_persona_memory`, khối `<persona>` trong prompt | Thái |
+| `persona/` | Store SQLite, route Persona + undo, tool `remember` / `forget`, khối `<persona>` trong prompt | Thái |
 | `tests/` | Test với LLM giả + bài fixture | ai sửa phần nào thêm test phần đó |
 
 ## Thiết kế
@@ -63,7 +63,7 @@ prompt = luật cố định + Persona + MỤC LỤC bài + (đoạn học viên
    │
    ▼
 LLM ──┬─ gọi search_lesson(query) ──▶ code: BM25 trong bài này → top-3 đoạn ──▶ LLM (vòng sau)
-      ├─ gọi propose_persona_memory ─▶ code: tạo đề xuất pending ─────────────▶ LLM (vòng sau)
+      ├─ gọi remember / forget ──────▶ code: ghi ngay vào Persona + bản update ─▶ LLM (vòng sau)
       └─ kết thúc bằng answer | chat | clarify | abstain
    │
    ▼
@@ -90,11 +90,13 @@ guard (code) ──▶ JSON về BE          tối đa 2 lần search, 3 vòng L
 
 - Nằm trong agent. Nội dung là markdown ≤2.000 ký tự, 2 mục: *Tính cách Tutor* · *Tutor nhớ về bạn* (spec §4).
 - Đưa vào prompt trong khối `<persona>`, chỉ điều chỉnh cách trình bày (độ dài, xưng hô, ví dụ); luật cố định luôn thắng.
-- Tutor chỉ **đề xuất** ghi nhớ; học viên bấm Lưu mới ghi. Điều học viên không muốn Tutor nhớ ghi thành dòng `Đừng nhớ: X` trong *Tutor nhớ về bạn* (tự gõ hoặc nhờ Tutor đề xuất); Tutor không đề xuất ghi nhớ điều chứa X.
-- **Không version, không hoàn tác, không snapshot theo chat.** Agent đọc Persona hiện tại theo `X-Learner-ID` mỗi lượt, nên sửa Persona áp dụng ngay câu hỏi tiếp theo.
-- Bấm Lưu một đề xuất = áp dòng đó vào Persona **hiện tại** (không ghi đè bằng bản `after` cũ), nên học viên sửa tay giữa chừng không bị mất.
+- **Tutor tự ghi nhớ** (tool `remember`) khi đủ 4 tiêu chí: học viên tự nói · bền vững · ảnh hưởng cách giải thích · không nhạy cảm (spec §4). Yêu cầu chỉ cho câu hiện tại ("ngắn hơn đi") không ghi.
+- **Chốt chặn phía code** (`persona/tools.py`): dòng ghi phải có ít nhất một từ học viên vừa gõ (`grounded_in`) nên nội dung bài không tự ghi được; lọc từ khoá nhạy cảm (`is_sensitive`).
+- **Tutor quên** (tool `forget`) khi học viên bảo; dòng bị xoá hẳn. Persona chỉ chứa điều được nhớ, không lưu câu phủ định.
+- Mỗi thay đổi trả về trong `persona_updates` `{id, action, line, before, after}`; FE hiện "Đã ghi nhớ · Hoàn tác". `POST /persona/updates/{id}/undo` hoàn tác đúng dòng đó trên Persona hiện tại (trả lại dòng cũ nếu đã bị thay).
+- **Không version, không snapshot theo chat.** Agent đọc Persona hiện tại theo `X-Learner-ID` mỗi lượt, nên sửa Persona áp dụng ngay câu hỏi tiếp theo.
 - Dòng dạng `Khoá: giá trị` (vd `Độ dài: ngắn gọn`) thay dòng cùng khoá thay vì thêm trùng.
-- Mã: `persona/store.py` (SQLite, `AGENT_DB`), `persona/routes.py`, `persona/tools.py` (tool + khối prompt). `agent.py` đã có vòng tool nhỏ cho tool này — Tùng mở rộng thêm tool của mình vào dict `tools`.
+- Mã: `persona/store.py` (SQLite, `AGENT_DB`), `persona/routes.py`, `persona/tools.py` (tool, chốt chặn, khối prompt, luật điều chỉnh theo nền tảng tech / non-tech).
 
 ## Đề xuất tool
 
@@ -107,7 +109,7 @@ Tool là hàm Python trong agent, truyền cho model qua tham số `tools` — *
 | `chat` | `text` | `decision=chat`, không citation | Có | Tùng |
 | `clarify` | `question`, `options: [2–3 câu]` | `decision=clarify`; options thành nút `send_message` | Có | Tùng |
 | `abstain` | `reason`, `next_step` | `decision=abstain`, nói rõ bài không có + gợi ý tiếp | Có | Tùng |
-| `propose_persona_memory` | `section`, `item` | Tạo đề xuất `{before, after}` pending, trả về trong `persona_proposals` | Không | Thái |
+| `remember` · `forget` | `section`, `item` · `item` | Ghi / xoá ngay một dòng Persona, trả `persona_updates` | Không | Thái |
 
 Cần thử: endpoint Gemini tương thích OpenAI có hỗ trợ `tool_choice="required"` không; nếu không, guard xử lý trường hợp model trả text thường.
 
@@ -115,8 +117,8 @@ Cần thử: endpoint Gemini tương thích OpenAI có hỗ trợ `tool_choice="
 
 | Người | Phạm vi | Việc |
 |---|---|---|
-| **Thái** | Persona | ✅ Xong: store SQLite, 5 route, `propose_persona_memory`, `persona_block()`, bỏ version/snapshot ở BE/FE/CONTRACT. Chạy BE với `PERSONA_API_URL` trỏ vào agent |
+| **Thái** | Persona | ✅ Store SQLite, route + undo, `remember` / `forget`, chốt chặn, `persona_block()`. Chạy BE với `PERSONA_API_URL` trỏ vào agent |
 | **Tùng** | Flow agent | Vòng tool trong `agent.py` · `search_lesson` (BM25) · `answer`/`chat`/`clarify`/`abstain` · citation + guard · idempotency theo `Idempotency-Key` (chỉ cache lượt thành công) · trace JSONL cho CP3/eval |
 | **Cường** | Eval | Chạy golden set qua `/respond`, đọc trace |
 
-Điểm nối giữa hai người: `agent.py` đã có vòng tool và dict `tools` với `propose_persona_memory` — Tùng thêm tool của mình vào đó; `persona_block()` đã được gọi trong `build_messages()`.
+Điểm nối giữa hai người: dict `tools` trong `agent.py` chứa `remember` / `forget`; `persona_block()` được gọi trong `build_messages()`.

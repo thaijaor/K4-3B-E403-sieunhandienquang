@@ -13,11 +13,6 @@ class PersonaWrite(BaseModel):
     text: str = Field(max_length=MAX_CHARS)
 
 
-class Accept(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    edited_text: str | None = Field(default=None, max_length=MAX_CHARS)
-
-
 def _store(request: Request):
     return request.app.state.persona_store
 
@@ -43,19 +38,11 @@ def clear_memory(request: Request, x_learner_id: str = Header("")):
     return _store(request).clear_memory(_learner(x_learner_id))
 
 
-@router.post("/proposals/{proposal_id}/accept")
-def accept(proposal_id: str, body: Accept, request: Request, x_learner_id: str = Header("")):
+@router.post("/updates/{update_id}/undo")
+def undo(update_id: str, request: Request, x_learner_id: str = Header("")):
     try:
-        return _store(request).accept(_learner(x_learner_id), proposal_id, body.edited_text)
+        return _store(request).undo(_learner(x_learner_id), update_id)
     except KeyError:
-        raise HTTPException(404, "Không tìm thấy đề xuất.")
+        raise HTTPException(404, "Không tìm thấy thay đổi.")
     except PersonaError as exc:
         raise HTTPException(422, str(exc))
-
-
-@router.post("/proposals/{proposal_id}/reject")
-def reject(proposal_id: str, request: Request, x_learner_id: str = Header("")):
-    try:
-        return _store(request).reject(_learner(x_learner_id), proposal_id)
-    except KeyError:
-        raise HTTPException(404, "Không tìm thấy đề xuất.")

@@ -34,8 +34,11 @@ class Action(Strict):
     value: str = Field(min_length=1, max_length=4000)
 
 
-class Proposal(Strict):
+class PersonaUpdate(Strict):
+    """Thay đổi Persona đã áp dụng trong lượt này; học viên hoàn tác được."""
     id: str = Field(pattern=r"^[a-zA-Z0-9-]{1,80}$")
+    action: Literal["remember", "forget"]
+    line: str = Field(min_length=1, max_length=200)
     before: str = Field(max_length=2000)
     after: str = Field(max_length=2000)
 
@@ -45,4 +48,4 @@ class AIReply(Strict):
     text: str = Field(min_length=1, max_length=16000)
     citations: list[Citation] = Field(default_factory=list, max_length=20)
     actions: list[Action] = Field(default_factory=list, max_length=8)
-    persona_proposals: list[Proposal] = Field(default_factory=list, max_length=4)
+    persona_updates: list[PersonaUpdate] = Field(default_factory=list, max_length=4)

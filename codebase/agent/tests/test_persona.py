@@ -9,10 +9,16 @@ from unittest import mock
 from fastapi.testclient import TestClient
 
 from app import create_app
-from persona.store import DEFAULT_TEXT, PersonaStore, add_item, clear_section, section_items
+from persona.store import DEFAULT_TEXT, PersonaStore, add_item, clear_section, find_item, section_items
+from persona.tools import grounded_in, is_sensitive
 
 FIXTURES = Path(__file__).parent / "fixtures" / "lessons.json"
-BODY = {"request_id": "req-1", "chat_id": "chat-1", "lesson_id": "demo", "text": "từ nay trả lời ngắn gọn thôi nha"}
+MEMORY = "Tutor nhớ về bạn"
+STYLE = "Tính cách Tutor"
+
+
+def body(text):
+    return {"request_id": "req-1", "chat_id": "chat-1", "lesson_id": "demo", "text": text}
 
 
 def call(name, arguments, call_id="call-1"):
@@ -32,25 +38,47 @@ class ScriptedLLM:
 
 
 class TextEditTest(unittest.TestCase):
+    def test_default_has_only_two_sections(self):
+        self.assertIn(f"## {STYLE}", DEFAULT_TEXT)
+        self.assertIn(f"## {MEMORY}", DEFAULT_TEXT)
+        self.assertEqual(DEFAULT_TEXT.count("## "), 2)
+
     def test_add_item_into_empty_section(self):
-        after = add_item(DEFAULT_TEXT, "Tutor nhớ về bạn", "Chưa quen lập trình")
-        self.assertEqual(section_items(after, "Tutor nhớ về bạn"), ["Chưa quen lập trình"])
-        self.assertEqual(section_items(after, "Tính cách Tutor"), ["Xưng hô: mình – bạn"])
-        self.assertNotIn("## Không được nhớ", after)
+        after = add_item(DEFAULT_TEXT, MEMORY, "Nền tảng: kế toán")
+        self.assertEqual(section_items(after, MEMORY), ["Nền tảng: kế toán"])
+        self.assertEqual(section_items(after, STYLE), ["Xưng hô: mình – bạn"])
 
     def test_key_value_item_replaces_same_key(self):
-        after = add_item(DEFAULT_TEXT, "Tính cách Tutor", "Xưng hô: anh – em")
-        self.assertEqual(section_items(after, "Tính cách Tutor"), ["Xưng hô: anh – em"])
+        after = add_item(DEFAULT_TEXT, STYLE, "Xưng hô: anh – em")
+        self.assertEqual(section_items(after, STYLE), ["Xưng hô: anh – em"])
 
     def test_duplicate_item_is_noop(self):
-        once = add_item(DEFAULT_TEXT, "Tutor nhớ về bạn", "Thích ví dụ")
-        self.assertEqual(add_item(once, "Tutor nhớ về bạn", "thích ví dụ"), once)
+        once = add_item(DEFAULT_TEXT, MEMORY, "Thích ví dụ")
+        self.assertEqual(add_item(once, MEMORY, "thích ví dụ"), once)
 
     def test_clear_section_keeps_others(self):
-        text = add_item(DEFAULT_TEXT, "Tutor nhớ về bạn", "Chưa quen lập trình")
-        cleared = clear_section(text, "Tutor nhớ về bạn")
-        self.assertEqual(section_items(cleared, "Tutor nhớ về bạn"), [])
-        self.assertEqual(section_items(cleared, "Tính cách Tutor"), ["Xưng hô: mình – bạn"])
+        cleared = clear_section(add_item(DEFAULT_TEXT, MEMORY, "Nền tảng: kế toán"), MEMORY)
+        self.assertEqual(section_items(cleared, MEMORY), [])
+        self.assertEqual(section_items(cleared, STYLE), ["Xưng hô: mình – bạn"])
+
+    def test_find_item_by_line_key_or_fragment(self):
+        text = add_item(DEFAULT_TEXT, MEMORY, "Nền tảng: kế toán, chưa học lập trình")
+        self.assertEqual(find_item(text, "nền tảng"), (MEMORY, "Nền tảng: kế toán, chưa học lập trình"))
+        self.assertEqual(find_item(text, "chưa học lập trình"), (MEMORY, "Nền tảng: kế toán, chưa học lập trình"))
+        self.assertIsNone(find_item(text, "không có dòng này"))
+
+
+class GuardTest(unittest.TestCase):
+    def test_grounded_only_in_learner_words(self):
+        self.assertTrue(grounded_in("Nền tảng: kế toán, chưa học lập trình", "mình dân kế toán, chưa code bao giờ"))
+        self.assertTrue(grounded_in("Độ dài: ngắn gọn", "từ nay trả lời ngắn thôi"))
+        self.assertFalse(grounded_in("Nền tảng: kỹ sư phần mềm", "citation là gì?"))
+
+    def test_sensitive(self):
+        self.assertTrue(is_sensitive("Đang stress vì điểm thi"))
+        self.assertTrue(is_sensitive("Bệnh: trầm cảm"))
+        self.assertFalse(is_sensitive("Nền tảng: kế toán"))
+        self.assertFalse(is_sensitive("Mục tiêu: tiến bộ về lượng kiến thức"))
 
 
 class StoreTest(unittest.TestCase):
@@ -61,39 +89,44 @@ class StoreTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def test_accept_applies_to_current_text_not_stale_after(self):
-        proposal = self.store.propose("a", "Tutor nhớ về bạn", "Chưa quen lập trình")
-        self.store.save("a", add_item(DEFAULT_TEXT, "Tính cách Tutor", "Độ dài: ngắn gọn"))  # học viên sửa tay sau đó
-        text = self.store.accept("a", proposal["id"])["text"]
+    def test_remember_applies_immediately(self):
+        update = self.store.remember("a", MEMORY, "Nền tảng: kế toán")
+        self.assertEqual(update["action"], "remember")
+        self.assertEqual(update["line"], "Nền tảng: kế toán")
+        self.assertIn("Nền tảng: kế toán", self.store.get("a")["text"])
+        self.assertIsNone(self.store.remember("a", MEMORY, "Nền tảng: kế toán"))
+
+    def test_undo_remember_removes_only_that_line(self):
+        update = self.store.remember("a", MEMORY, "Nền tảng: kế toán")
+        self.store.remember("a", STYLE, "Độ dài: ngắn gọn")  # thay đổi khác sau đó giữ nguyên
+        text = self.store.undo("a", update["id"])["text"]
+        self.assertNotIn("kế toán", text)
         self.assertIn("Độ dài: ngắn gọn", text)
-        self.assertIn("Chưa quen lập trình", text)
+        self.assertEqual(self.store.undo("a", update["id"])["text"], text)  # idempotent
 
-    def test_accept_is_idempotent_and_edited_text_wins(self):
-        proposal = self.store.propose("a", "Tutor nhớ về bạn", "Thích ví dụ")
-        self.assertEqual(self.store.accept("a", proposal["id"], "Bản tự sửa")["text"], "Bản tự sửa")
-        self.assertEqual(self.store.accept("a", proposal["id"])["text"], "Bản tự sửa")
+    def test_undo_restores_replaced_line(self):
+        self.store.remember("a", MEMORY, "Nền tảng: chưa học lập trình")
+        update = self.store.remember("a", MEMORY, "Nền tảng: biết Python cơ bản")
+        self.assertEqual(section_items(self.store.get("a")["text"], MEMORY), ["Nền tảng: biết Python cơ bản"])
+        text = self.store.undo("a", update["id"])["text"]
+        self.assertEqual(section_items(text, MEMORY), ["Nền tảng: chưa học lập trình"])
 
-    def test_reject_does_not_change_persona(self):
-        proposal = self.store.propose("a", "Tutor nhớ về bạn", "Thích ví dụ")
-        self.store.reject("a", proposal["id"])
+    def test_forget_removes_line_without_trace(self):
+        self.store.remember("a", MEMORY, "Nền tảng: chưa học lập trình")
+        update = self.store.forget("a", "chưa học lập trình")
+        text = self.store.get("a")["text"]
+        self.assertEqual(section_items(text, MEMORY), [])
+        self.assertNotIn("lập trình", text)
+        self.assertIn("lập trình", self.store.undo("a", update["id"])["text"])
+
+    def test_forget_unknown_is_noop(self):
+        self.assertIsNone(self.store.forget("a", "không có"))
         self.assertEqual(self.store.get("a")["text"], DEFAULT_TEXT)
-        self.assertEqual(self.store.accept("a", proposal["id"])["text"], DEFAULT_TEXT)
-
-    def test_dont_remember_topic_is_not_proposed(self):
-        self.store.save("a", add_item(DEFAULT_TEXT, "Tutor nhớ về bạn", "Đừng nhớ: điểm số"))
-        self.assertIsNone(self.store.propose("a", "Tutor nhớ về bạn", "Lo lắng về điểm số"))
-        self.assertIsNotNone(self.store.propose("a", "Tutor nhớ về bạn", "Thích ví dụ"))
-
-    def test_dont_remember_lines_do_not_replace_each_other(self):
-        self.store.save("a", add_item(DEFAULT_TEXT, "Tutor nhớ về bạn", "Đừng nhớ: điểm số"))
-        proposal = self.store.propose("a", "Tutor nhớ về bạn", "Đừng nhớ: giờ học")
-        items = section_items(self.store.accept("a", proposal["id"])["text"], "Tutor nhớ về bạn")
-        self.assertEqual(items, ["Đừng nhớ: điểm số", "Đừng nhớ: giờ học"])
 
     def test_owner_isolation(self):
-        proposal = self.store.propose("a", "Tutor nhớ về bạn", "Thích ví dụ")
+        update = self.store.remember("a", MEMORY, "Thích ví dụ")
         with self.assertRaises(KeyError):
-            self.store.accept("b", proposal["id"])
+            self.store.undo("b", update["id"])
 
 
 class ServiceTest(unittest.TestCase):
@@ -107,6 +140,12 @@ class ServiceTest(unittest.TestCase):
         with mock.patch.dict(os.environ, {"SERVICE_API_KEY": ""}):
             return TestClient(create_app(llm=llm, lessons_file=FIXTURES, env_file=None, db_path=Path(self.tmp.name) / "p.sqlite"))
 
+    def reply(self, text, *tool_calls):
+        llm = ScriptedLLM(SimpleNamespace(content="", tool_calls=list(tool_calls)),
+                          SimpleNamespace(content='{"decision": "chat", "text": "Ok"}', tool_calls=None))
+        client = self.client(llm)
+        return client, llm, client.post("/respond", json=body(text), headers={"X-Learner-ID": "a"}).json()
+
     def test_routes(self):
         client = self.client(ScriptedLLM())
         learner = {"X-Learner-ID": "a"}
@@ -115,33 +154,48 @@ class ServiceTest(unittest.TestCase):
         self.assertEqual(client.put("/persona", json={"text": "Ngắn gọn"}, headers=learner).json()["text"], "Ngắn gọn")
         self.assertEqual(client.put("/persona", json={"text": "x" * 2001}, headers=learner).status_code, 422)
         self.assertEqual(client.get("/persona", headers={"X-Learner-ID": "b"}).json()["text"], DEFAULT_TEXT)
-        self.assertEqual(client.post("/persona/proposals/nope/accept", json={}, headers=learner).status_code, 404)
+        self.assertEqual(client.post("/persona/updates/nope/undo", json={}, headers=learner).status_code, 404)
 
-    def test_respond_returns_proposal_from_tool_call(self):
-        llm = ScriptedLLM(
-            SimpleNamespace(content="", tool_calls=[call("propose_persona_memory", {"section": "Tính cách Tutor", "item": "Độ dài: ngắn gọn"})]),
-            SimpleNamespace(content="Ok, mình sẽ trả lời ngắn.", tool_calls=None))
-        client = self.client(llm)
-        reply = client.post("/respond", json=BODY, headers={"X-Learner-ID": "a"}).json()
-        self.assertEqual(reply["text"], "Ok, mình sẽ trả lời ngắn.")
-        self.assertEqual(len(reply["persona_proposals"]), 1)
-        self.assertIn("Độ dài: ngắn gọn", reply["persona_proposals"][0]["after"])
+    def test_remember_is_saved_and_returned_as_update(self):
+        client, llm, reply = self.reply("mình dân kế toán, chưa code bao giờ",
+                                        call("remember", {"section": MEMORY, "item": "Nền tảng: kế toán, chưa học lập trình"}))
+        update = reply["persona_updates"][0]
+        self.assertEqual((update["action"], update["line"]), ("remember", "Nền tảng: kế toán, chưa học lập trình"))
+        self.assertIn("kế toán", client.get("/persona", headers={"X-Learner-ID": "a"}).json()["text"])
         self.assertIn("tools", llm.calls[0][1])
         self.assertNotIn("tools", llm.calls[1][1])
-        self.assertIn("</persona>", llm.calls[0][0][0]["content"])
+        undone = client.post(f"/persona/updates/{update['id']}/undo", json={}, headers={"X-Learner-ID": "a"}).json()
+        self.assertEqual(undone["text"], DEFAULT_TEXT)
+
+    def test_remember_not_grounded_in_learner_message_is_refused(self):
+        client, _, reply = self.reply("citation là gì?", call("remember", {"section": MEMORY, "item": "Nền tảng: kỹ sư phần mềm"}))
+        self.assertEqual(reply["persona_updates"], [])
         self.assertEqual(client.get("/persona", headers={"X-Learner-ID": "a"}).json()["text"], DEFAULT_TEXT)
+
+    def test_sensitive_memory_is_refused(self):
+        client, _, reply = self.reply("mình đang stress vì điểm thi", call("remember", {"section": MEMORY, "item": "Đang stress vì điểm thi"}))
+        self.assertEqual(reply["persona_updates"], [])
+
+    def test_forget_tool(self):
+        llm = ScriptedLLM(SimpleNamespace(content="", tool_calls=[call("forget", {"item": "Nền tảng"})]),
+                          SimpleNamespace(content='{"decision": "chat", "text": "Ok"}', tool_calls=None))
+        client = self.client(llm)
+        client.put("/persona", json={"text": add_item(DEFAULT_TEXT, MEMORY, "Nền tảng: chưa học lập trình")}, headers={"X-Learner-ID": "a"})
+        reply = client.post("/respond", json=body("quên chuyện mình chưa biết code đi"), headers={"X-Learner-ID": "a"}).json()
+        self.assertEqual(reply["persona_updates"][0]["action"], "forget")
+        self.assertEqual(client.get("/persona", headers={"X-Learner-ID": "a"}).json()["text"].count("lập trình"), 0)
 
     def test_edit_applies_to_next_question(self):
         llm = ScriptedLLM(SimpleNamespace(content="Ok", tool_calls=None))
         client = self.client(llm)
         client.put("/persona", json={"text": "Độ dài: ngắn gọn"}, headers={"X-Learner-ID": "a"})
-        client.post("/respond", json=BODY, headers={"X-Learner-ID": "a"})
+        client.post("/respond", json=body("hi"), headers={"X-Learner-ID": "a"})
         self.assertIn("Độ dài: ngắn gọn", llm.calls[0][0][0]["content"])
 
     def test_no_learner_means_no_persona(self):
         llm = ScriptedLLM(SimpleNamespace(content="Chào bạn!", tool_calls=None))
-        reply = self.client(llm).post("/respond", json=BODY).json()
-        self.assertEqual(reply["persona_proposals"], [])
+        reply = self.client(llm).post("/respond", json=body("hi")).json()
+        self.assertEqual(reply["persona_updates"], [])
         self.assertNotIn("tools", llm.calls[0][1])
         self.assertNotIn("</persona>", llm.calls[0][0][0]["content"])
 

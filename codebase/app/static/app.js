@@ -138,7 +138,7 @@ function renderMessages() {
       for (const action of m.actions) actions.append(button(action.label, () => action.type === 'open_source' ? openSource(action.value) : sendText(action.value)));
       bubble.append(actions);
     }
-    for (const proposal of m.persona_proposals || []) bubble.append(proposalCard(proposal));
+    for (const update of m.persona_updates || []) bubble.append(memoryNote(update));
     root.append(bubble);
   }
   root.scrollTop = root.scrollHeight;
@@ -218,76 +218,19 @@ async function mutatePersona(path, method, payload) {
     $('persona-clear').disabled = state.editing || !state.persona;
   }
 }
-function lineDiff(before = '', after = '') {
-  const left = before.split('\n');
-  const right = after.split('\n');
-  const lengths = Array.from({length: left.length + 1}, () => Array(right.length + 1).fill(0));
-  for (let i = left.length - 1; i >= 0; i--) for (let j = right.length - 1; j >= 0; j--) {
-    lengths[i][j] = left[i] === right[j] ? lengths[i + 1][j + 1] + 1 : Math.max(lengths[i + 1][j], lengths[i][j + 1]);
-  }
-  const rows = []; let i = 0; let j = 0;
-  while (i < left.length || j < right.length) {
-    if (i < left.length && j < right.length && left[i] === right[j]) { rows.push({type: 'same', text: left[i]}); i++; j++; }
-    else if (j < right.length && (i === left.length || lengths[i][j + 1] >= lengths[i + 1][j])) { rows.push({type: 'add', text: right[j++]}); }
-    else rows.push({type: 'remove', text: left[i++]});
-  }
-  return rows;
-}
-function proposalDiff(before, after) {
-  const rows = lineDiff(before, after);
-  const changed = rows.map((row, index) => row.type === 'same' ? -1 : index).filter(index => index >= 0);
-  const visible = new Set(changed);
-  for (const index of changed) {
-    if (index > 0) visible.add(index - 1);
-    if (index + 1 < rows.length) visible.add(index + 1);
-    for (let cursor = index - 1; cursor >= 0; cursor--) {
-      if (rows[cursor].type === 'same' && /^#{1,2} /.test(rows[cursor].text)) { visible.add(cursor); break; }
-    }
-  }
-  const view = node('div', undefined, 'diff-view');
-  view.setAttribute('aria-label', 'Thay đổi Persona được đề xuất');
-  let skipped = false;
-  rows.forEach((row, index) => {
-    if (!visible.has(index)) {
-      const nextVisible = rows.findIndex((_, cursor) => cursor > index && visible.has(cursor));
-      if (!skipped && row.text && (nextVisible < 0 || !/^#{1,2} /.test(rows[nextVisible].text))) view.append(node('div', '⋯', 'diff-row diff-skip'));
-      skipped = true; return;
-    }
-    skipped = false;
-    const mark = row.type === 'add' ? '+' : row.type === 'remove' ? '−' : ' ';
-    const text = row.type !== 'same' && row.text.startsWith('- ') ? row.text.slice(2) : row.text;
-    const line = node('div', undefined, `diff-row diff-${row.type}`);
-    line.append(node('span', mark, 'diff-mark'), node('span', text || ' ', 'diff-text'));
-    view.append(line);
-  });
-  const added = rows.filter(row => row.type === 'add').length;
-  const removed = rows.filter(row => row.type === 'remove').length;
-  const summary = removed && added ? `Thay ${Math.max(removed, added)} dòng` : added ? `Thêm ${added} dòng` : `Xoá ${removed} dòng`;
-  return {summary, view};
-}
-function proposalCard(proposal) {
-  const card = node('section', undefined, 'proposal'); card.append(node('h3', 'Tutor đề xuất ghi nhớ'));
-  const diff = proposalDiff(proposal.before || '', proposal.after || '');
-  card.append(node('p', diff.summary, 'diff-summary'), diff.view);
-  if (proposal.status && proposal.status !== 'pending') {card.append(node('p', proposal.status === 'accepted' ? 'Đã lưu vào Persona' : 'Đã bỏ qua đề xuất', 'proposal-status')); return card;}
-  const label = node('label', 'Sửa đề xuất trước khi lưu', 'small');
-  const draft = node('textarea'); draft.value = proposal.after; draft.maxLength = 2000; draft.rows = 5;
-  draft.id = `proposal-${proposal.id}`; label.htmlFor = draft.id; label.hidden = draft.hidden = true; card.append(label, draft);
-  const status = node('p', '', 'proposal-status'); status.setAttribute('role', 'status');
-  const actions = node('div', undefined, 'actions');
-  const accept = button('Lưu', async () => {
-    actions.querySelectorAll('button').forEach(b => b.disabled = true);
+function memoryNote(update) {
+  const note = node('p', undefined, 'memory-note'); note.setAttribute('role', 'status');
+  const label = node('span', `${update.action === 'forget' ? 'Đã quên' : 'Đã ghi nhớ'}: ${update.line}`);
+  note.append(node('span', '🔖', 'memory-icon'), label);
+  if (update.status === 'undone') {note.classList.add('undone'); note.append(node('span', ' · Đã hoàn tác', 'memory-status')); return note;}
+  const undo = button('Hoàn tác', async () => {
+    undo.disabled = true;
     try {
-      const result = await api(`/persona/proposals/${proposal.id}/accept`, 'POST', {edited_text: draft.hidden ? null : draft.value});
-      savedPersona(result); proposal.status = 'accepted'; actions.remove(); draft.hidden = label.hidden = true; status.textContent = 'Đã cập nhật Persona · Áp dụng từ câu hỏi tiếp theo';
-    } catch (e) { status.textContent = e.message; actions.querySelectorAll('button').forEach(b => b.disabled = false); }
-  }, 'primary');
-  const edit = button('Sửa', () => {draft.hidden = label.hidden = false; draft.focus();});
-  const reject = button('Không', async () => {
-    actions.querySelectorAll('button').forEach(b => b.disabled = true);
-    try {await api(`/persona/proposals/${proposal.id}/reject`, 'POST', {}); proposal.status = 'rejected'; actions.remove(); draft.hidden = label.hidden = true; status.textContent = 'Đã bỏ qua. Persona không đổi.';}
-    catch (e) {status.textContent = e.message; actions.querySelectorAll('button').forEach(b => b.disabled = false);}
-  }); actions.append(accept, edit, reject); card.append(actions, status); return card;
+      savedPersona(await api(`/persona/updates/${update.id}/undo`, 'POST', {}));
+      update.status = 'undone'; note.classList.add('undone'); undo.replaceWith(node('span', 'Đã hoàn tác', 'memory-status'));
+    } catch (e) {undo.disabled = false; undo.title = e.message;}
+  }, 'link');
+  note.append(node('span', ' · '), undo); return note;
 }
 $('composer').addEventListener('submit', e => {e.preventDefault(); send();});
 $('question').addEventListener('input', controls);
