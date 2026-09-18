@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    html,body{margin:0;height:100%;overflow:hidden;background:#eeeeef;font-family:'Be Vietnam Pro',sans-serif;}
+    a{color:#134d8b;} a:hover{color:#0b2a4d;}
+    ::-webkit-scrollbar{width:8px;height:8px;}
+    ::-webkit-scrollbar-thumb{background:#d9d9d9;border-radius:4px;}
+    @keyframes dotPulse{0%,80%,100%{opacity:.25;}40%{opacity:1;}}
+  </style>
+</helmet>
+
+<div style="width:100%;box-sizing:border-box;display:flex;justify-content:flex-end;padding:0 8px 6px;">
+  <div style="background:#171717;color:#fff;font-size:11px;font-weight:600;letter-spacing:.04em;padding:4px 10px;border-radius:8px;">Prototype · nhóm sieunhandienquang</div>
+</div>
+<div id="vlearn-scale-wrap" style="width:100%;overflow:hidden;"><div id="vlearn-stage" style="width:1440px;height:900px;transform-origin:top left;display:flex;flex-direction:column;background:#f4f4f4;position:relative;font-size:16px;color:#2e2e2e;">
+
+  <!-- HEADER -->
+  <div style="height:48px;min-height:48px;background:#fff;box-shadow:0 1px 2px rgba(11,42,77,.08);display:flex;align-items:center;justify-content:space-between;padding:8px 20px;z-index:10;white-space:nowrap;">
+    <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+      <div style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;color:#4a4a4a;font-size:16px;cursor:pointer;flex-shrink:0;">←</div>
+      <div style="font-size:14px;font-weight:600;color:#2e2e2e;white-space:nowrap;">Bài 1 · DAY01</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;flex-shrink:0;">
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+        <div style="width:120px;height:4px;background:#eeeeef;border-radius:2px;overflow:hidden;flex-shrink:0;"><div style="width:0%;height:100%;background:#387aad;"></div></div>
+        <div style="font-size:12px;color:#666;white-space:nowrap;">0/22 bài</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;background:#f2f7fc;border:1px solid #bed9ee;color:#134d8b;font-size:14px;font-weight:700;padding:8px 14px;border-radius:8px;cursor:default;white-space:nowrap;flex-shrink:0;">
+        <span style="background:linear-gradient(135deg,#c94b9e,#e07b7b);-webkit-background-clip:text;background-clip:text;color:transparent;">✦</span>
+        Đặt câu hỏi với AI
+      </div>
+      <div style="font-size:14px;font-weight:500;color:#4a4a4a;padding:8px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;flex-shrink:0;">Gửi yêu cầu</div>
+      <div style="width:28px;height:28px;border-radius:50%;background:#e0edf8;color:#134d8b;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">N</div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div style="flex:1;display:flex;overflow:hidden;">
+
+    <!-- SIDEBAR -->
+    <div style="width:290px;min-width:290px;background:#eff5f8;box-shadow:10px 0 24px -12px rgba(46,46,46,.2);overflow-y:auto;padding:16px 0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px 12px;">
+        <div style="font-size:14px;font-weight:700;letter-spacing:.08em;color:#2e2e2e;">NỘI DUNG BÀI HỌC</div>
+        <div style="cursor:pointer;color:#848484;font-size:14px;">×</div>
+      </div>
+
+      <div style="padding:8px 16px 4px;font-size:12px;font-weight:700;letter-spacing:.06em;color:#848484;">SLIDES</div>
+      <sc-for list="{{ slideItems }}" as="item" hint-placeholder-count="4">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;border-left:3px solid {{ item.borderColor }};background:{{ item.bgColor }};cursor:pointer;">
+          <span style="font-size:14px;color:#848484;">▤</span>
+          <div style="flex:1;font-size:14px;color:{{ item.textColor }};font-weight:{{ item.fontWeight }};">{{ item.title }}</div>
+          <sc-if value="{{ item.active }}"><div style="font-size:11px;font-weight:700;color:#d73a40;">Đang học</div></sc-if>
+        </div>
+      </sc-for>
+
+      <div style="padding:12px 16px 4px;font-size:12px;font-weight:700;letter-spacing:.06em;color:#848484;">VIDEO</div>
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;color:#4a4a4a;font-size:14px;cursor:pointer;"><span style="color:#848484;">▶</span>Giới thiệu Day 01</div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px 4px;cursor:pointer;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.06em;color:#848484;">KC &amp; LUYỆN TẬP</div>
+        <div style="font-size:11px;color:#848484;">›</div>
+      </div>
+    </div>
+
+    <!-- SLIDE READING AREA -->
+    <div style="flex:1;overflow-y:auto;background:#f4f4f4;padding:24px;display:flex;flex-direction:column;gap:16px;min-width:0;">
+      <div style="background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(11,42,77,.1);padding:40px;min-height:340px;display:flex;flex-direction:column;gap:16px;">
+        <div style="font-size:22px;font-weight:700;color:#103e70;">Temperature và top-k/top-p</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:15px;color:#4a4a4a;">
+          <div style="padding:8px 10px;border-radius:6px;border:2px solid {{ tempBulletHighlight }};">• Temperature điều chỉnh độ ngẫu nhiên khi chọn token tiếp theo</div>
+          <div>• Temperature = 0 → luôn chọn token có xác suất cao nhất (deterministic)</div>
+          <div>• Top-k giới hạn số lượng token ứng viên; top-p lọc theo tổng xác suất</div>
+          <div>• Kết hợp temperature + top-p là cấu hình phổ biến cho chatbot</div>
+        </div>
+      </div>
+
+      <div style="background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(11,42,77,.1);padding:8px 16px;display:flex;align-items:center;gap:16px;font-size:13px;color:#666;">
+        <span style="cursor:pointer;">✎</span><span style="cursor:pointer;">▭▭</span><span style="cursor:pointer;">100%</span><span style="cursor:pointer;font-weight:700;">T</span><span style="cursor:pointer;">💡</span>
+        <span style="flex:1;"></span>
+        <span style="cursor:pointer;">‹</span><span>{{ slidePage }} / 29</span><span style="cursor:pointer;">›</span>
+        <span style="cursor:pointer;">▦</span><span style="cursor:pointer;">Sổ ghi chú</span>
+      </div>
+
+      <div style="background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(11,42,77,.1);padding:16px;">
+        <div style="font-size:13px;font-weight:700;color:#2e2e2e;margin-bottom:6px;">Ghi chú của giảng viên</div>
+        <div style="font-size:13px;color:#666;">Nhắc học viên phân biệt temperature (độ ngẫu nhiên) với top-k/top-p (giới hạn tập ứng viên). Ví dụ minh hoạ ở slide 13.</div>
+      </div>
+    </div>
+
+    <!-- TUTOR PANEL -->
+    <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+    <div style="width:355px;min-width:355px;background:#fff;border-left:1px solid #eeeeef;display:flex;flex-direction:column;position:relative;">
+      <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #eeeeef;">
+        <span style="background:linear-gradient(135deg,#c94b9e,#e07b7b);-webkit-background-clip:text;background-clip:text;color:transparent;font-size:16px;">✦</span>
+        <div style="font-size:14px;font-weight:600;color:#2e2e2e;">Trợ giảng AI</div>
+        <div style="width:1px;height:14px;background:#d9d9d9;"></div>
+        <div style="font-size:12px;font-weight:500;color:#387aad;cursor:pointer;" onclick="{{ onNewChat }}">+ Chat mới</div>
+        <div style="flex:1;"></div>
+        <span style="color:#848484;cursor:pointer;font-size:14px;">⟲</span>
+        <span style="color:#848484;cursor:pointer;font-size:14px;" onclick="{{ onCollapsePanel }}">⤢</span>
+        <span style="color:#848484;cursor:pointer;font-size:15px;" onclick="{{ onCollapsePanel }}">×</span>
+      </div>
+
+      <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;" id="tutor-scroll">
+        <sc-for list="{{ messages }}" as="m" hint-placeholder-count="1">
+          <div style="display:flex;flex-direction:column;align-items:{{ m.align }};gap:6px;">
+
+            <sc-if value="{{ m.title }}">
+              <div style="font-size:16px;font-weight:700;color:#2e2e2e;">{{ m.title }}</div>
+              <div style="font-size:13px;color:#666;margin-top:-4px;">{{ m.sub }}</div>
+            </sc-if>
+
+            <sc-if value="{{ m.badge }}">
+              <div style="font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;background:{{ m.badge.bg }};color:{{ m.badge.color }};">{{ m.badge.label }}</div>
+            </sc-if>
+
+            <sc-if value="{{ m.segments }}">
+              <div style="max-width:270px;padding:10px 12px;border-radius:8px;font-size:14px;line-height:1.6;background:{{ m.bubbleBg }};color:{{ m.bubbleColor }};">
+                <sc-for list="{{ m.segments }}" as="seg" hint-placeholder-count="2">
+                  <span>{{ seg.text }} </span>
+                  <sc-if value="{{ seg.cit }}">
+                    <span onclick="{{ seg.cit.onClick }}" style="font-size:11px;font-weight:700;color:#387aad;cursor:pointer;">{{ seg.cit.label }}</span>
+                  </sc-if>
+                  <span> </span>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ m.citations }}">
+              <div>
+                <span onclick="{{ m.citToggle }}" style="font-size:11px;color:#848484;cursor:pointer;user-select:none;">Nguồn ({{ m.citations.length }}) {{ m.citArrow }}</span>
+                <sc-if value="{{ m.citOpen }}">
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">
+                    <sc-for list="{{ m.citations }}" as="cit" hint-placeholder-count="2">
+                      <div style="font-size:11px;font-weight:600;color:#387aad;background:#f2f7fc;border:1px solid #bed9ee;padding:2px 7px;border-radius:6px;cursor:pointer;" onclick="{{ cit.onClick }}">{{ cit.n }} {{ cit.label }}</div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ m.popover }}">
+              <div style="max-width:270px;background:#171717;color:#fff;font-size:12px;padding:10px 12px;border-radius:8px;line-height:1.5;">
+                <div style="font-size:10px;color:#a3a3a3;font-weight:600;margin-bottom:4px;">TRANSCRIPT DAY 1</div>
+                {{ m.popover }}
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ m.chips }}">
+              <div style="display:flex;flex-direction:column;gap:6px;max-width:270px;align-items:flex-start;">
+                <sc-for list="{{ m.chips }}" as="chip" hint-placeholder-count="3">
+                  <div style="font-size:13px;font-weight:500;color:#103e70;border:1px solid #d9d9d9;padding:6px 10px;border-radius:6px;cursor:pointer;line-height:1.3;" onclick="{{ chip.onClick }}">{{ chip.label }}</div>
+                </sc-for>
+                <sc-if value="{{ m.other }}"><div style="font-size:12px;color:#387aad;padding:0 2px;cursor:pointer;">Khác…</div></sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ m.actions }}">
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <sc-for list="{{ m.actions }}" as="act" hint-placeholder-count="2">
+                  <div style="font-size:13px;font-weight:700;color:#134d8b;background:#f2f7fc;border:1px solid #bed9ee;padding:7px 12px;border-radius:8px;cursor:pointer;" onclick="{{ act.onClick }}">{{ act.label }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ m.footnote }}">
+              <div style="font-size:11px;color:#848484;">{{ m.footnote }}</div>
+            </sc-if>
+
+            <sc-if value="{{ m.feedback }}">
+              <div style="display:flex;gap:12px;align-items:center;font-size:13px;color:#848484;">
+                <span style="cursor:pointer;">👍</span><span style="cursor:pointer;">👎</span>
+                <span style="cursor:pointer;color:#387aad;font-weight:500;" onclick="{{ m.feedback }}">Chưa đúng ý</span>
+              </div>
+            </sc-if>
+
+          </div>
+        </sc-for>
+
+        <sc-if value="{{ composing }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:4px;padding:10px 12px;background:#f8f9fa;border-radius:8px;width:44px;">
+            <span style="width:6px;height:6px;border-radius:50%;background:#a3a3a3;display:inline-block;animation:dotPulse 1s infinite;"></span>
+            <span style="width:6px;height:6px;border-radius:50%;background:#a3a3a3;display:inline-block;animation:dotPulse 1s infinite .15s;"></span>
+            <span style="width:6px;height:6px;border-radius:50%;background:#a3a3a3;display:inline-block;animation:dotPulse 1s infinite .3s;"></span>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="padding:12px 16px 8px;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;max-width:100%;">
+          <sc-for list="{{ sampleQuestions }}" as="sq" hint-placeholder-count="4">
+            <div onclick="{{ sq.onClick }}" style="font-size:12px;font-weight:500;color:#134d8b;background:#f2f7fc;border:1px solid #bed9ee;padding:5px 10px;border-radius:8px;cursor:pointer;white-space:nowrap;">{{ sq.label }}</div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;border:1px solid #d9d9d9;border-radius:8px;box-shadow:0 3px 8px -2px rgba(11,42,77,.1);padding:8px 10px;background:#fff;">
+          <input value="{{ inputValue }}" onChange="{{ onInputChange }}" onKeyDown="{{ onInputKeyDown }}" placeholder="Hỏi bất cứ điều gì..." style="flex:1;border:none;outline:none;font-size:14px;font-family:inherit;color:#2e2e2e;"></input>
+          <div onclick="{{ onSend }}" style="width:26px;height:26px;border-radius:50%;background:#134d8b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;">➤</div>
+        </div>
+        <div style="font-size:10px;color:#848484;margin-top:6px;">Trợ giảng AI có thể sai — hãy đối chiếu với bài giảng.</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ !panelOpen }}" hint-placeholder-val="{{ false }}">
+      <div onclick="{{ onCollapsePanel }}" style="position:absolute;top:60px;right:16px;width:36px;height:36px;border-radius:8px;background:#134d8b;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.2);">✦</div>
+    </sc-if>
+
+  </div>
+
+  <!-- DEMO CONTROL -->
+  <div style="position:absolute;bottom:16px;left:16px;z-index:40;">
+    <div onclick="{{ onToggleDemoMenu }}" style="background:#171717;color:#fff;font-size:13px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.25);">Kịch bản demo ▾</div>
+    <sc-if value="{{ demoMenuOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;bottom:44px;left:0;background:#fff;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:6px;width:200px;">
+        <sc-for list="{{ demoOptions }}" as="opt" hint-placeholder-count="6">
+          <div onclick="{{ opt.onClick }}" style="padding:8px 10px;font-size:13px;color:#2e2e2e;border-radius:6px;cursor:pointer;">{{ opt.label }}</div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+
+</div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const BADGES = {
+  answer: { label: '✓ Trả lời · đủ căn cứ', bg: '#effaf3', color: '#0e623a' },
+  ask: { label: '? Hỏi lại', bg: '#f2f7fc', color: '#134d8b' },
+  refuse: { label: '⊘ Không có trong bài', bg: '#fff8e8', color: '#874e00' },
+  refuseQuiz: { label: '⊘ Không đưa đáp án', bg: '#fff8e8', color: '#874e00' },
+};
+
+class Component extends DCLogic {
+  state = {
+    messages: [],
+    composing: false,
+    inputValue: '',
+    slidePage: 12,
+    tempHighlight: false,
+    panelOpen: true,
+    demoMenuOpen: false,
+  };
+
+  componentDidMount() {
+    this.goToS0();
+    this.applyScale = () => {
+      const wrap = document.getElementById('vlearn-scale-wrap');
+      const stage = document.getElementById('vlearn-stage');
+      if (!wrap || !stage) return;
+      const parent = wrap.parentElement;
+      const availW = parent ? parent.clientWidth : window.innerWidth;
+      const top = wrap.offsetTop || 0;
+      const availH = window.innerHeight - top - 4;
+      let scale = Math.min(availW / 1440, availH / 900);
+      if (!isFinite(scale) || scale <= 0) scale = 1;
+      scale = Math.max(0.1, scale);
+      // Keep controls proportional, but let the flex layout fill the viewport.
+      stage.style.width = (availW / scale) + 'px';
+      stage.style.height = (availH / scale) + 'px';
+      stage.style.transform = 'scale(' + scale + ')';
+      wrap.style.height = availH + 'px';
+      wrap.style.width = '100%';
+    };
+    this.applyScale();
+    window.addEventListener('resize', this.applyScale);
+    setTimeout(this.applyScale, 50);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.applyScale);
+  }
+
+  scrollDown() {
+    setTimeout(() => {
+      const el = document.getElementById('tutor-scroll');
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 30);
+  }
+
+  decorate(msg) {
+    const full = Object.assign({}, msg);
+    full.align = full.role === 'user' ? 'flex-end' : 'flex-start';
+    full.bubbleBg = full.role === 'user' ? '#bed9ee' : '#f8f9fa';
+    full.bubbleColor = full.role === 'user' ? '#103e70' : '#2e2e2e';
+    if (full.text && !full.segments) { full.segments = [{ text: full.text }]; }
+    if (full.citations) {
+      const nums = ['①', '②', '③', '④'];
+      full.citations = full.citations.map((c, i) => Object.assign({ n: nums[i] || '' }, c));
+      full.citOpen = false;
+      full.citArrow = '▾';
+      full.citToggle = () => this.toggleCitations(full);
+    }
+    return full;
+  }
+
+  pushUser(text) {
+    this.setState(s => ({ messages: [...s.messages, this.decorate({ role: 'user', text })] }));
+    this.scrollDown();
+  }
+
+  toggleCitations(msg) {
+    msg.citOpen = !msg.citOpen;
+    msg.citArrow = msg.citOpen ? '▴' : '▾';
+    this.forceUpdate();
+  }
+
+  pushAi(msg, delay = 800) {
+    this.setState({ composing: true });
+    this.scrollDown();
+    setTimeout(() => {
+      const full = this.decorate(Object.assign({ role: 'ai' }, msg));
+      this.setState(s => ({ messages: [...s.messages, full], composing: false }));
+      this.scrollDown();
+    }, delay);
+  }
+
+  citSlide(page) {
+    return () => this.setState({ slidePage: page, tempHighlight: true }, () => setTimeout(() => this.setState({ tempHighlight: false }), 1600));
+  }
+
+  citTranscript(msgIndexRef, text) {
+    return () => this.setState(s => {
+      const msgs = s.messages.slice();
+      const target = msgs[msgs.length - 1];
+      target.popover = text;
+      return { messages: msgs };
+    });
+  }
+
+  classify(text) {
+    const t = text.toLowerCase();
+    if (t.includes('temperature')) return 'S1';
+    if (t.includes('kill switch')) return 'S3';
+    if (t.includes('đáp án')) return 'S4';
+    return 'S2';
+  }
+
+  onInputChange = (e) => this.setState({ inputValue: e.target.value });
+  onInputKeyDown = (e) => { if (e.key === 'Enter' && this.state.inputValue.trim()) this.handleSend(); };
+  onSend = () => { if (this.state.inputValue.trim()) this.handleSend(); };
+
+  handleSend() {
+    const text = this.state.inputValue.trim();
+    this.setState({ inputValue: '' });
+    this.pushUser(text);
+    const scenario = this.classify(text);
+    if (scenario === 'S1') this.runS1();
+    else if (scenario === 'S3') this.runS3();
+    else if (scenario === 'S4') this.runS4();
+    else this.runS2();
+  }
+
+  onSuggestionChip(label) {
+    this.pushUser(label);
+    if (label.includes('Temperature')) this.runS1();
+    else if (label.includes('Kill switch')) this.runS3();
+    else if (label.includes('đáp án')) this.runS4();
+    else this.runS2();
+  }
+
+  s1Answer() {
+    const citSlide12 = { label: '[Slide tr.12]', onClick: this.citSlide(12) };
+    const citTranscript = { label: '[T04-072]', onClick: this.citTranscript(0, '"Nếu để temperature = 0, model gần như luôn trả lời giống nhau — hữu ích khi cần độ ổn định."') };
+    return {
+      badge: BADGES.answer,
+      segments: [
+        { text: 'Temperature điều chỉnh độ ngẫu nhiên khi model chọn từ tiếp theo.', cit: citSlide12 },
+        { text: 'Temperature = 0 thì luôn chọn từ có xác suất cao nhất; tăng lên thì câu trả lời đa dạng, sáng tạo hơn.', cit: citTranscript },
+      ],
+      citations: [citSlide12, citTranscript],
+      feedback: () => this.runS5(),
+    };
+  }
+
+  runS1() { this.pushAi(this.s1Answer()); }
+
+  runS2() {
+    this.pushAi({
+      badge: BADGES.ask,
+      text: 'Bạn muốn mình giải thích theo cách nào?',
+      chips: [
+        { label: '① Tóm tắt 3 dòng', onClick: () => this.answerS2('① Tóm tắt 3 dòng', 'Temperature = 0 → luôn chọn từ xác suất cao nhất. Tăng temperature → câu trả lời đa dạng hơn. Dùng thấp cho chính xác, cao cho sáng tạo.') },
+        { label: '② Giải thích dễ hiểu kèm ví dụ', onClick: () => this.answerS2('② Giải thích dễ hiểu kèm ví dụ', 'Giống việc chọn món ăn: temperature thấp = luôn chọn món quen thuộc nhất; temperature cao = đôi khi thử món lạ hơn.') },
+        { label: '③ Chi tiết kỹ thuật', onClick: () => this.answerS2('③ Chi tiết kỹ thuật', 'Temperature chia logits trước softmax: giá trị nhỏ làm phân phối xác suất nhọn hơn (ít ngẫu nhiên), giá trị lớn làm phân phối phẳng hơn (đa dạng hơn).') },
+      ],
+      other: true,
+    });
+  }
+
+  answerS2(chipLabel, answerText) {
+    this.pushUser(chipLabel);
+    const cit = { label: '[Slide tr.12]', onClick: this.citSlide(12) };
+    this.pushAi({
+      badge: BADGES.answer,
+      segments: [{ text: answerText, cit }],
+      citations: [cit],
+      feedback: () => this.runS5(),
+    });
+  }
+
+  runS3() {
+    this.pushAi({
+      badge: BADGES.refuse,
+      text: 'Bài đang mở (Day 01, slide và transcript) chưa đề cập kill switch, nên mình không trả lời như nội dung của bài để tránh bạn học lệch.',
+      actions: [
+        { label: 'Hỏi TA trên Discord', onClick: () => this.pushAi({ text: '(mô phỏng) Đã mở kênh hỏi TA trên Discord.' }, 300) },
+        { label: 'Hỏi về nội dung trong bài', onClick: () => this.runS0Chips() },
+      ],
+      footnote: 'Đã kiểm tra: 29 trang slide · transcript Day 01',
+    });
+  }
+
+  runS0Chips() {
+    this.pushAi({ text: 'Được, bạn muốn hỏi phần nào trong bài?' });
+  }
+
+  runS4() {
+    this.pushAi({
+      badge: BADGES.refuseQuiz,
+      text: 'Mình không đưa đáp án quiz, nhưng có thể giúp bạn tự làm:',
+      chips: [
+        { label: 'Gợi ý hướng nghĩ', onClick: () => {
+          this.pushUser('Gợi ý hướng nghĩ');
+          const cit = { label: '[Slide tr.14]', onClick: this.citSlide(14) };
+          this.pushAi({ segments: [{ text: 'Thử so sánh temperature = 0 với temperature cao ở cùng một câu hỏi — sự khác biệt nằm ở độ lặp lại của câu trả lời.', cit }], citations: [cit] });
+        } },
+        { label: 'Kiểm tra đáp án mình chọn', onClick: () => { this.pushUser('Kiểm tra đáp án mình chọn'); this.pushAi({ text: 'Bạn cho mình biết bạn đã chọn đáp án nào, mình sẽ gợi ý cách tự kiểm tra lại nhé.' }); } },
+        { label: 'Mở lại đoạn bài liên quan', onClick: () => { this.pushUser('Mở lại đoạn bài liên quan'); this.citSlide(14)(); this.pushAi({ text: 'Mình đã mở slide 14 — phần liên quan tới câu hỏi này.' }); } },
+      ],
+    });
+  }
+
+  runS5() {
+    this.pushAi({
+      badge: BADGES.ask,
+      text: 'Bạn muốn điều chỉnh gì?',
+      chips: [
+        { label: 'Ngắn hơn', onClick: () => { this.pushUser('Ngắn hơn'); const cit = { label: '[Slide tr.12]', onClick: this.citSlide(12) }; this.pushAi({ badge: BADGES.answer, segments: [{ text: 'Temperature điều chỉnh độ ngẫu nhiên khi chọn từ tiếp theo.', cit }], citations: [cit] }); } },
+        { label: 'Có ví dụ', onClick: () => { this.pushUser('Có ví dụ'); const cit = { label: '[Slide tr.12]', onClick: this.citSlide(12) }; this.pushAi({ badge: BADGES.answer, segments: [{ text: 'Giống chọn món ăn: temperature thấp luôn chọn món quen; temperature cao đôi khi thử món mới.', cit }], citations: [cit] }); } },
+        { label: 'Mình hỏi ý khác', onClick: () => this.goToS0() },
+      ],
+    });
+  }
+
+  goToS0() {
+    this.setState({
+      messages: [this.decorate({
+        role: 'ai',
+        title: 'Chào bạn, học vui nhé!',
+        sub: 'Đang mở: Day 01 · LLM Foundation · trang 12',
+        chips: [
+          { label: 'Giải thích đoạn này', onClick: () => this.onSuggestionChip('Giải thích đoạn này') },
+          { label: 'Temperature là gì?', onClick: () => this.onSuggestionChip('Temperature là gì?') },
+          { label: 'Kill switch là gì?', onClick: () => this.onSuggestionChip('Kill switch là gì?') },
+        ],
+      })],
+      composing: false, inputValue: '', slidePage: 12, tempHighlight: false, demoMenuOpen: false,
+    });
+  }
+
+  jumpDemo(key) {
+    this.setState({ demoMenuOpen: false });
+    if (key === 'S0') return this.goToS0();
+    if (key === 'S1') { this.goToS0(); this.setState(s => ({ messages: [...s.messages, this.decorate({ role: 'user', text: 'Temperature là gì?' }), this.decorate(this.s1Answer())] })); return; }
+    if (key === 'S2') { this.goToS0(); this.setState(s => ({ messages: [...s.messages, this.decorate({ role: 'user', text: 'Giải thích đoạn này' })] })); return this.runS2(); }
+    if (key === 'S3') { this.goToS0(); this.setState(s => ({ messages: [...s.messages, this.decorate({ role: 'user', text: 'Kill switch là gì?' })] })); return this.runS3(); }
+    if (key === 'S4') { this.goToS0(); this.setState(s => ({ messages: [...s.messages, this.decorate({ role: 'user', text: 'Câu 3 đáp án là gì?' })] })); return this.runS4(); }
+    if (key === 'S5') { this.goToS0(); this.setState(s => ({ messages: [...s.messages, this.decorate({ role: 'user', text: 'Temperature là gì?' }), this.decorate(this.s1Answer())] })); return this.runS5(); }
+  }
+
+  renderVals() {
+    return {
+      messages: this.state.messages,
+      composing: this.state.composing,
+      inputValue: this.state.inputValue,
+      slidePage: this.state.slidePage,
+      tempBulletHighlight: this.state.tempHighlight ? '#eab308' : 'transparent',
+      panelOpen: this.state.panelOpen,
+      demoMenuOpen: this.state.demoMenuOpen,
+      onInputChange: this.onInputChange,
+      onInputKeyDown: this.onInputKeyDown,
+      onSend: this.onSend,
+      onNewChat: () => this.goToS0(),
+      onCollapsePanel: () => this.setState(s => ({ panelOpen: !s.panelOpen })),
+      sampleQuestions: [
+        { label: 'Temperature là gì?', onClick: () => this.onSuggestionChip('Temperature là gì?') },
+        { label: 'Giải thích đoạn này', onClick: () => this.onSuggestionChip('Giải thích đoạn này') },
+        { label: 'Kill switch là gì?', onClick: () => this.onSuggestionChip('Kill switch là gì?') },
+        { label: 'Câu 3 đáp án là gì?', onClick: () => this.onSuggestionChip('Câu 3 đáp án là gì?') },
+      ],
+      onToggleDemoMenu: () => this.setState(s => ({ demoMenuOpen: !s.demoMenuOpen })),
+      demoOptions: [
+        { label: 'S0 · Màn trống', onClick: () => this.jumpDemo('S0') },
+        { label: 'S1 · Trả lời', onClick: () => this.jumpDemo('S1') },
+        { label: 'S2 · Hỏi lại', onClick: () => this.jumpDemo('S2') },
+        { label: 'S3 · Không có trong bài', onClick: () => this.jumpDemo('S3') },
+        { label: 'S4 · Quiz', onClick: () => this.jumpDemo('S4') },
+        { label: 'S5 · Sửa', onClick: () => this.jumpDemo('S5') },
+      ],
+      slideItems: [
+        { title: 'Mở đầu Day 01', borderColor: 'transparent', bgColor: 'transparent', textColor: '#4a4a4a', fontWeight: '400' },
+        { title: 'LLM Foundation là gì', borderColor: 'transparent', bgColor: 'transparent', textColor: '#4a4a4a', fontWeight: '400' },
+        { title: 'Temperature và top-k/top-p', active: true, borderColor: '#d73a40', bgColor: '#e0edf8', textColor: '#103e70', fontWeight: '700' },
+        { title: 'Prompt engineering cơ bản', borderColor: 'transparent', bgColor: 'transparent', textColor: '#4a4a4a', fontWeight: '400' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
