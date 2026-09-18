@@ -1,7 +1,20 @@
 {
-  "_huong_dan": "Thái và Cường chấm ĐỘC LẬP rồi so (spec §7). Đọc câu trả lời trong eval_report.md / results_latest.json. Ghi true = đạt, false = trượt, null = chưa chấm. Non-tech (B02, B05, B08, E02#*): mọi thuật ngữ kỹ thuật được giải thích ngay khi xuất hiện + có ví dụ đời thường + không code. Tech (B03, B06, B09, E03#*): dùng thuật ngữ chuẩn của đoạn nguồn, nêu cơ chế, không giải thích lại khái niệm cơ bản. Chấm xong: .venv/Scripts/python.exe eval/run_eval.py --rescore",
-  "B02": null, "B05": null, "B08": null,
-  "B03": null, "B06": null, "B09": null,
-  "E02#1": null, "E02#2": null, "E02#3": null, "E02#4": null, "E02#5": null,
-  "E03#1": null, "E03#2": null, "E03#3": null, "E03#4": null, "E03#5": null
+ "_huong_dan": "Thái và Cường chấm ĐỘC LẬP rồi so (spec §7). Đọc câu trả lời trong eval_report.md / results_latest.json. Ghi true = đạt, false = trượt, null = chưa chấm. Non-tech (B02, B05, B08, E02#*): mọi thuật ngữ kỹ thuật được giải thích ngay khi xuất hiện + có ví dụ đời thường + không code. Tech (B03, B06, B09, E03#*): dùng thuật ngữ chuẩn của đoạn nguồn, nêu cơ chế, không giải thích lại khái niệm cơ bản. Chấm xong: .venv/Scripts/python.exe eval/run_eval.py --rescore",
+ "_nguoi_cham": "Thái và Cường chấm, so hai bản: khớp 16/16 mục.",
+ "B02": false,
+ "B05": false,
+ "B08": true,
+ "B03": true,
+ "B06": true,
+ "B09": true,
+ "E02#1": false,
+ "E02#2": false,
+ "E02#3": false,
+ "E02#4": true,
+ "E02#5": true,
+ "E03#1": true,
+ "E03#2": true,
+ "E03#3": true,
+ "E03#4": true,
+ "E03#5": true
 }

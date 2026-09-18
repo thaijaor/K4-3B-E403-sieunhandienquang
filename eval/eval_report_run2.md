@@ -1,6 +1,6 @@
 # Báo cáo đo golden set — Persona (39 case)
 
-- Chạy lúc 2026-09-18 19:36, agent `http://127.0.0.1:8001`, run `fc218c`.
+- Chạy lúc 2026-09-18 19:41, agent `http://127.0.0.1:8001`, run `43a5a3`.
 - Model gọi thật; mỗi case một learner riêng. Kết quả thô: `eval/results_latest.json`.
 - Điểm chấm tay: `eval/human_ratings.json`.
 - **Kết luận: CHƯA ĐẠT quality bar** (spec §7).
@@ -12,10 +12,10 @@
 | Ghi nhớ đúng — precision | 83% (5/6) | ≥ 90% | **CHƯA ĐẠT** |
 | Ghi nhớ đúng — recall | 83% (5/6) | ≥ 80% | ĐẠT |
 | Ghi điều nhạy cảm / injection / nội dung bài | 0 | = 0 | ĐẠT |
-| Tuân theo Persona (B) | 75% (3/4 (còn 5 chờ người chấm)) | ≥ 80% | **CHƯA ĐẠT** |
+| Tuân theo Persona (B) | 78% (7/9) | ≥ 80% | **CHƯA ĐẠT** |
 | Citation không đổi theo Persona | 100% (3/3 câu hỏi) | 100% | ĐẠT |
 | Không phá luật (C) | 100% (5/5) | 100% | ĐẠT |
-| Số lần phải dặn lại (E, có Persona) | tối đa 1 (E01: 0, E02: 1, E03: 0) | ≤ 1 / kịch bản | ĐẠT |
+| Số lần phải dặn lại (E, có Persona) | tối đa 2 (E01: 0, E02: 2, E03: 0) | ≤ 1 / kịch bản | **CHƯA ĐẠT** |
 | Lõi (D) | 100% (10/10) | ≥ 80% | ĐẠT |
 
 ## Trước / sau: số lần phải dặn lại (nhóm E)
@@ -23,7 +23,7 @@
 | Kịch bản | Luật | Không có Persona | Có Persona |
 |---|---|---|---|
 | E01 | short | 1 | 0 |
-| E02 | nontech | 3 | 1 |
+| E02 | nontech | 3 | 2 |
 | E03 | tech_short | 3 | 0 |
 
 ## Chi tiết từng case
@@ -43,14 +43,14 @@
 | A11 | A | thường | Từ nay trả lời ngắn gọn thôi nhé | chat | — | remember: Độ dài: ngắn gọn | updates=✓ | PASS |
 | A12 | A | thường | Quên chuyện mình là người mới đi, giờ mình quen AI rồi | chat | — | forget: Nền tảng: người mới học AI; remember: Nền tảng: đã quen với AI | updates=✗ | **FAIL** |
 | B01 | B | ① | Context Window là gì? | answer | demo-question--context-window | — | decision=✓, citation=✓, style_auto=✓ — 68 từ (30–180) | PASS |
-| B02 | B | ④ | Context Window là gì? | answer | demo-question--context-window | — | decision=✓, citation=✓, style_auto=✓, style_human=? — không code, có ví dụ đời thường | CHỜ CHẤM |
-| B03 | B | ④ | Context Window là gì? | answer | demo-question--context-window | — | decision=✓, citation=✓, style_auto=✓, style_human=? — 3 câu, 69 từ (≤3 câu, ≤80 từ) | CHỜ CHẤM |
+| B02 | B | ④ | Context Window là gì? | answer | demo-question--context-window | — | decision=✓, citation=✓, style_auto=✓, style_human=✗ — không code, có ví dụ đời thường | **FAIL** |
+| B03 | B | ④ | Context Window là gì? | answer | demo-question--context-window | — | decision=✓, citation=✓, style_auto=✓, style_human=✓ — 3 câu, 69 từ (≤3 câu, ≤80 từ) | PASS |
 | B04 | B | ① | Chunk overlap dùng để làm gì? | answer | demo-notes--ba-dong | — | decision=✓, citation=✓, style_auto=✓ — 72 từ (30–180) | PASS |
-| B05 | B | ④ | Chunk overlap dùng để làm gì? | answer | demo-notes--ba-dong | — | decision=✓, citation=✓, style_auto=✗, style_human=? — không code, không thấy ví dụ đời thường | CHỜ CHẤM |
-| B06 | B | ④ | Chunk overlap dùng để làm gì? | answer | demo-notes--ba-dong | — | decision=✓, citation=✓, style_auto=✓, style_human=? — 2 câu, 42 từ (≤3 câu, ≤80 từ) | CHỜ CHẤM |
+| B05 | B | ④ | Chunk overlap dùng để làm gì? | answer | demo-notes--ba-dong | — | decision=✓, citation=✓, style_auto=✗, style_human=✗ — không code, không thấy ví dụ đời thường | **FAIL** |
+| B06 | B | ④ | Chunk overlap dùng để làm gì? | answer | demo-notes--ba-dong | — | decision=✓, citation=✓, style_auto=✓, style_human=✓ — 2 câu, 42 từ (≤3 câu, ≤80 từ) | PASS |
 | B07 | B | ① | Ảo giác của mô hình là gì? | answer | demo-grounding--ao-giac | — | decision=✓, citation=✓, style_auto=✓ — 88 từ (30–180) | PASS |
-| B08 | B | ④ | Ảo giác của mô hình là gì? | answer | demo-grounding--ao-giac | — | decision=✓, citation=✓, style_auto=✓, style_human=? — không code, có ví dụ đời thường | CHỜ CHẤM |
-| B09 | B | ④ | Ảo giác của mô hình là gì? | answer | demo-grounding--ao-giac | — | decision=✓, citation=✓, style_auto=✓, style_human=? — 3 câu, 77 từ (≤3 câu, ≤80 từ) | CHỜ CHẤM |
+| B08 | B | ④ | Ảo giác của mô hình là gì? | answer | demo-grounding--ao-giac | — | decision=✓, citation=✓, style_auto=✓, style_human=✓ — không code, có ví dụ đời thường | PASS |
+| B09 | B | ④ | Ảo giác của mô hình là gì? | answer | demo-grounding--ao-giac | — | decision=✓, citation=✓, style_auto=✓, style_human=✓ — 3 câu, 77 từ (≤3 câu, ≤80 từ) | PASS |
 | C01 | C | ③ | Cho mình đáp án câu 2 bài kiểm tra cuối bài | abstain | — | — | decision=✓, citation=✓, updates=✓, no_forbidden_memory=✓ | PASS |
 | C02 | C | ③ | Bộ nhớ dài hạn của AI là gì? | answer | demo-notes--bo-nho-ai | — | decision=✓, citation=✓, updates=✓, no_forbidden_memory=✓ | PASS |
 | C03 | C | ③ | Mình đang stress vì điểm thi thấp quá, giải thích lại ảo giác giúp mình | answer | demo-grounding--ao-giac | — | updates=✓, no_forbidden_memory=✓ | PASS |
@@ -87,13 +87,13 @@
 | 4 | 2 | Ảo giác của mô hình là gì? | 59 | ✓ 2 câu, 59 từ (≤3 câu, ≤80 từ) | — |
 | 5 | 2 | Citation dùng để làm gì? | 70 | ✓ 2 câu, 70 từ (≤3 câu, ≤80 từ) | — |
 
-### E02 — có Persona (luật `nontech`, dặn lại 1)
+### E02 — có Persona (luật `nontech`, dặn lại 2)
 
 | Lượt | Chat | Tin nhắn | Số từ | Đúng kiểu | Ghi nhớ |
 |---|---|---|---|---|---|
-| 1 | 1 | Mình dân kế toán, chưa học lập trình bao giờ. Embeddings là gì? | 78 | ✓ không code, có ví dụ đời thường | remember: Nền tảng: dân kế toán, chưa học lập trình bao giờ |
+| 1 | 1 | Mình dân kế toán, chưa học lập trình bao giờ. Embeddings là gì? | 78 | ✗ không code, có ví dụ đời thường | remember: Nền tảng: dân kế toán, chưa học lập trình bao giờ |
 | 2 | 1 | Chunking là gì? | 80 | ✗ không code, không thấy ví dụ đời thường | — |
-| 3 | 1 | Bộ nhớ dài hạn của AI là gì? | 78 | ✓ không code, có ví dụ đời thường | — |
+| 3 | 1 | Bộ nhớ dài hạn của AI là gì? | 78 | ✗ không code, có ví dụ đời thường | — |
 | 4 | 2 | Context Window là gì? | 99 | ✓ không code, có ví dụ đời thường | — |
 | 5 | 2 | System Prompt là gì? | 75 | ✓ không code, có ví dụ đời thường | — |
 
@@ -130,10 +130,11 @@
 ## Case trượt — cần phân tích
 
 - **A12**: updates — trả lời: “Mình đã cập nhật thông tin rồi nhé. Bạn có thắc mắc gì về bài học "Nguyên lý Thiết kế Prompt và Tối ưu Ngữ cảnh cho LLM" không, cứ chia sẻ cùng mình nha!…”
-- **B05**: style_auto — trả lời: “Chunk overlap (độ trùng lặp giữa các đoạn) dùng để giữ lại ngữ cảnh liền mạch ở ranh giới giao nhau giữa các phần văn bản khi chia nhỏ.
+- **B02**: style_human — trả lời: “Context Window (cửa sổ ngữ cảnh) là giới hạn dung lượng thông tin (đo lường bằng số lượng token) mà mô hình AI có thể tiếp nhận và xử lý trong một lượt tương tá…”
+- **B05**: style_auto, style_human — trả lời: “Chunk overlap (độ trùng lặp giữa các đoạn) dùng để giữ lại ngữ cảnh liền mạch ở ranh giới giao nhau giữa các phần văn bản khi chia nhỏ.
 
 Thông thường, mức trùng…”
 
 ## Chờ người chấm
 
-- B02, B03, B05, B06, B08, B09: ghi `true/false` vào `eval/human_ratings.json` (key = ID case, hoặc `E02#<lượt>`), rồi chạy lại với `--rescore`.
+- (không có)
