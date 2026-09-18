@@ -221,12 +221,13 @@ def pct(value):
     return f"{value * 100:.0f}%"
 
 
-def write_report(results, scenarios, m, v, started):
+def write_report(results, scenarios, m, v, started, ratings_path=RATINGS, ratings_source="", report_path=REPORT):
     ok = lambda key: "ĐẠT" if v[key] else "**CHƯA ĐẠT**"
     lines = [
         "# Báo cáo đo golden set — Persona (39 case)", "",
         f"- Chạy lúc {time.strftime('%Y-%m-%d %H:%M', time.localtime(started))}, agent `{AGENT_URL}`, run `{RUN}`.",
         f"- Model gọi thật; mỗi case một learner riêng. Kết quả thô: `eval/{RESULTS.name}`.",
+        f"- Điểm chấm tay: `eval/{Path(ratings_path).name}`" + (f" — {ratings_source}" if ratings_source else "") + ".",
         f"- **Kết luận: {'ĐẠT quality bar' if all(v.values()) else 'CHƯA ĐẠT quality bar'}** (spec §7).", "",
         "## Tổng hợp so với quality bar", "",
         "| Chỉ số | Kết quả | Bar | |", "|---|---|---|---|",
@@ -270,15 +271,18 @@ def write_report(results, scenarios, m, v, started):
     lines += ["", "## Chờ người chấm", "",
               (f"- {', '.join(pending)}: ghi `true/false` vào `eval/human_ratings.json` (key = ID case, hoặc `E02#<lượt>`), rồi chạy lại với `--rescore`."
                if pending else "- (không có)")]
-    REPORT.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    Path(report_path).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--only", default="", help="vd A,B — chỉ chạy các nhóm này")
-    parser.add_argument("--rescore", action="store_true", help="không gọi agent; chấm lại results_latest.json với human_ratings.json")
+    parser.add_argument("--rescore", action="store_true", help="không gọi agent; chấm lại results_latest.json với file điểm chấm tay")
+    parser.add_argument("--ratings", default=str(RATINGS), help="file điểm chấm tay (mặc định human_ratings.json)")
+    parser.add_argument("--report", default=str(REPORT), help="nơi ghi báo cáo")
     args = parser.parse_args()
-    ratings = json.loads(RATINGS.read_text(encoding="utf-8")) if RATINGS.exists() else {}
+    ratings_path = Path(args.ratings)
+    ratings = json.loads(ratings_path.read_text(encoding="utf-8")) if ratings_path.exists() else {}
     started = time.time()
     if args.rescore:
         saved = json.loads(RESULTS.read_text(encoding="utf-8"))
@@ -304,9 +308,9 @@ def main():
     apply_human(results, scenarios, ratings)
     m = metrics(results, scenarios)
     v = verdict(m)
-    write_report(results, scenarios, m, v, started)
+    write_report(results, scenarios, m, v, started, ratings_path, ratings.get("_nguon", ""), Path(args.report))
     print(json.dumps({k: (round(val, 3) if isinstance(val, float) else val) for k, val in m.items()}, ensure_ascii=False, indent=1))
-    print("ĐẠT" if all(v.values()) else "CHƯA ĐẠT", "→", REPORT)
+    print("ĐẠT" if all(v.values()) else "CHƯA ĐẠT", "→", args.report)
 
 
 GOLD = json.loads(GOLDEN.read_text(encoding="utf-8"))
