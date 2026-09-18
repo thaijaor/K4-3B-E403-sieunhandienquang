@@ -1,0 +1,90 @@
+// PR #4 UI requirements. Run with playwright-cli run-code.
+async page => {
+  const checks = [];
+  const check = (condition, label) => {if (!condition) throw new Error(label); checks.push(label);};
+  try {
+    await page.setViewportSize({width:1440,height:800});
+    await page.context().clearCookies();
+    await page.goto('http://127.0.0.1:8765');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForFunction(() => document.querySelectorAll('[data-lesson]').length === 6 && !document.getElementById('new-chat').disabled);
+    check(await page.locator('#tutor-panel').isHidden(), 'AI hidden on desktop load');
+    check(await page.locator('#lesson-sidebar').isVisible(), 'sidebar visible on desktop load');
+    check(await page.locator('#lesson-nav details').count() === 3, 'three Day accordions');
+    check(await page.locator('[aria-current=page] .learning-label').innerText() === 'Đang học', 'active lesson label');
+    const group = page.locator('#lesson-nav details').first();
+    await group.locator('summary').click();
+    check(await group.locator('button').first().isHidden(), 'accordion closes');
+    await group.locator('summary').click();
+    check(await group.locator('button').first().isVisible(), 'accordion opens');
+    const wide = await page.locator('.lesson').evaluate(el => el.clientWidth);
+    await page.screenshot({path:'output/playwright/review-reading-desktop.png'});
+    await page.locator('#tutor-toggle').click();
+    check(await page.locator('.lesson').evaluate(el => el.clientWidth) < wide, 'opening AI allocates right column');
+    check((await page.locator('.empty').innerText()).includes('Đang mở: Đọc câu trả lời cùng bằng chứng'), 'empty chat names current lesson');
+    check(await page.locator('#question').getAttribute('placeholder') === 'Hỏi bất cứ điều gì…', 'composer placeholder');
+    await page.locator('#collapse').click();
+    check(await page.locator('#chat-body').isHidden(), 'collapse hides chat body');
+    await page.locator('#collapse').click();
+    check(await page.locator('#question').isVisible(), 'collapse restores composer');
+    await page.locator('#tutor-close').click();
+    check(await page.locator('.lesson').evaluate(el => el.clientWidth) === wide, 'close restores reading width');
+    await page.locator('#sidebar-close').click();
+    check(await page.locator('#lesson-sidebar').isHidden(), 'sidebar close');
+    check(await page.locator('.lesson').evaluate(el => el.clientWidth) > wide, 'reading expands when sidebar closes');
+    await page.locator('#sidebar-open').click();
+    check(await page.locator('#lesson-sidebar').isVisible(), 'sidebar reopen');
+    const lessons = await (await page.request.get('http://127.0.0.1:8765/api/lessons')).json();
+    const saved = [];
+    for (const lesson of lessons) {
+      const item = page.locator(`[data-lesson="${lesson.id}"]`);
+      const details = item.locator('..');
+      if (!(await details.getAttribute('open') !== null)) await details.locator('summary').click();
+      await item.click();
+      await page.waitForFunction(id => document.querySelector('[aria-current=page]')?.dataset.lesson === id && !document.getElementById('new-chat').disabled, lesson.id);
+      check(await page.locator('#lesson-title').innerText() === lesson.title, `lesson opens: ${lesson.id}`);
+      if (await page.locator('#tutor-panel').isHidden()) await page.locator('#tutor-toggle').click();
+      await page.locator('#question').fill('Citation là gì?'); await page.locator('#send').click();
+      await page.locator('.citations button').first().waitFor();
+      await page.locator('.citations button').first().click();
+      const content = await (await page.request.get('http://127.0.0.1:8765/api/lessons/' + lesson.id)).json();
+      const source = content.sources[0];
+      await page.waitForFunction(title => document.getElementById('source-title').textContent === title, source.title);
+      check(await page.locator('#source-text').innerText() === source.text, `citation maps Markdown: ${lesson.id}`);
+      check(await page.locator('.citation-target').getAttribute('id') === source.anchor, `heading highlighted: ${lesson.id}`);
+      await page.locator('#source-close').click();
+      saved.push(await page.evaluate(() => localStorage.getItem('tutor.chat')));
+    }
+    await page.locator('#history-open').click();
+    await page.locator('.history-item').first().waitFor();
+    check(await page.locator('.history-item').count() === 6, 'history lists all created chats');
+    await page.locator('.history-item').last().click();
+    await page.waitForFunction(id => localStorage.getItem('tutor.chat') === id, saved[0]);
+    check(await page.locator('#lesson-title').innerText() === lessons[0].title, 'history restores lesson');
+    check(await page.locator('.message.assistant').count() === 1, 'history restores messages');
+    await page.locator('#tutor-toggle').click(); await page.locator('#tutor-toggle').click();
+    check(await page.locator('.message.assistant').count() === 1, 'toggle retains conversation');
+    await page.screenshot({path:'output/playwright/review-chat-desktop.png'});
+    await page.setViewportSize({width:320,height:568});
+    await page.reload();
+    await page.waitForFunction(() => !document.getElementById('new-chat').disabled);
+    check(await page.locator('#tutor-panel').isHidden() && await page.locator('#lesson-sidebar').isHidden(), 'mobile opens in reading mode');
+    await page.locator('#sidebar-open').click();
+    await page.locator('[data-lesson="demo-question"]').click();
+    await page.waitForFunction(() => document.getElementById('lesson-title').textContent === 'Đặt câu hỏi có ngữ cảnh' && !document.getElementById('new-chat').disabled);
+    check(await page.locator('#lesson-sidebar').isHidden(), 'mobile choosing lesson returns to reading');
+    await page.locator('.source-card button').first().click();
+    check(await page.locator('#tutor-panel').isVisible(), 'ask about section opens AI');
+    check(await page.locator('#selection').isVisible(), 'selected section stays visible');
+    check(await page.locator('#question').inputValue() === 'Giải thích đoạn này', 'section question populated');
+    await page.screenshot({path:'output/playwright/review-chat-mobile.png'});
+    await page.locator('#tutor-close').click();
+    check(await page.locator('#lesson-title').isVisible(), 'mobile close returns to reading');
+    await page.evaluate(result => window.__reviewCheck=result, {passed:checks.length,checks});
+    return {passed:checks.length,checks};
+  } catch(e) {
+    await page.evaluate(result => window.__reviewCheck=result, {passed:checks.length,checks,failure:e.message});
+    throw e;
+  }
+}

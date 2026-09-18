@@ -7,18 +7,18 @@
   <link rel="stylesheet" href="/static/style.css"><script type="module" src="/static/app.js"></script>
 </head>
 <body>
-  <header class="topbar"><a class="brand" href="/">V<span>Learn</span><small>LEARNING SPACE</small></a><span class="workspace-label">Không gian học tập</span><span class="avatar" aria-label="Phiên học viên">HV</span></header>
+  <header class="topbar"><a class="brand" href="/">V<span>Learn</span><small>LEARNING SPACE</small></a><span class="workspace-label">Không gian học tập</span><button id="tutor-toggle" class="primary" aria-controls="tutor-panel" aria-expanded="false">Đặt câu hỏi với AI</button><span class="avatar" aria-label="Phiên học viên">HV</span></header>
   <div id="connection" class="connection" role="status">Đang mở không gian học…</div>
   <main class="workspace">
+    <aside id="lesson-sidebar" class="lesson-sidebar" aria-label="Nội dung bài học"><header><h2>NỘI DUNG BÀI HỌC</h2><button id="sidebar-close" class="icon" aria-label="Ẩn nội dung bài học">×</button></header><nav id="lesson-nav" aria-label="Danh sách bài học"></nav></aside>
     <section class="lesson" aria-labelledby="lesson-title">
-      <div class="eyebrow">BÀI ĐANG MỞ</div>
-      <label class="sr-only" for="lesson-select">Chọn bài học</label><select id="lesson-select" disabled></select>
+      <div class="lesson-tools"><button id="sidebar-open" class="secondary" aria-controls="lesson-sidebar" aria-expanded="true">☰ Nội dung bài học</button><span class="eyebrow">BÀI ĐANG MỞ · MARKDOWN</span></div>
       <h1 id="lesson-title">Học hiểu, từng câu hỏi.</h1><p id="lesson-subtitle" class="muted"></p>
       <div id="lesson-sources"></div>
       <footer class="reading-note">Chọn “Hỏi về đoạn này” để Tutor biết bạn đang đọc phần nào.</footer>
     </section>
-    <section id="tutor-panel" class="tutor" aria-labelledby="tutor-title">
-      <header class="tutor-header"><div class="tutor-heading"><span class="spark" aria-hidden="true">✦</span><div><h2 id="tutor-title">Trợ giảng AI</h2><span class="muted small">Cùng bạn hiểu rõ bài đang đọc</span></div></div><div class="toolbar"><button id="persona-open" class="secondary">Persona</button><button id="new-chat" class="secondary">＋ Chat mới</button><button id="collapse" class="icon" aria-label="Thu gọn trợ giảng" aria-expanded="true">−</button></div></header>
+    <section id="tutor-panel" class="tutor" aria-labelledby="tutor-title" hidden>
+      <header class="tutor-header"><div class="tutor-heading"><span class="spark" aria-hidden="true">✦</span><div><h2 id="tutor-title">Trợ giảng AI</h2><span class="muted small">Cùng bạn hiểu rõ bài đang đọc</span></div><button id="tutor-close" class="icon" aria-label="Đóng trợ giảng">×</button></div><div class="toolbar"><button id="persona-open" class="secondary">Persona</button><button id="new-chat" class="secondary">＋ Chat mới</button><button id="history-open" class="secondary" aria-label="Lịch sử chat">Lịch sử</button><button id="collapse" class="icon" aria-label="Thu gọn trợ giảng" aria-expanded="true">−</button></div></header>
       <div id="chat-body" class="chat-body">
         <div class="chat-status">
         <div id="version" class="version"></div>
@@ -29,7 +29,7 @@
         <div id="messages" class="messages" role="log" aria-label="Hội thoại" aria-live="polite"></div>
         <form id="composer" class="composer">
           <div id="selection" class="selection" hidden><span id="selection-label"></span><button id="clear-selection" type="button" class="text-button">Bỏ chọn</button></div>
-          <label class="sr-only" for="question">Câu hỏi của bạn</label><textarea id="question" rows="2" maxlength="4000" placeholder="Bạn muốn hiểu rõ điều gì trong bài?" disabled></textarea>
+          <label class="sr-only" for="question">Câu hỏi của bạn</label><textarea id="question" rows="2" maxlength="4000" placeholder="Hỏi bất cứ điều gì…" disabled></textarea>
           <div class="compose-bottom"><span id="compose-hint" class="muted small">Enter để gửi · Shift + Enter xuống dòng</span><button id="send" class="primary" type="submit" disabled>Gửi ↑</button></div>
           <p class="disclaimer">AI có thể sai. Hãy mở nguồn để đối chiếu với bài học.</p>
         </form>
@@ -47,6 +47,7 @@
     </div>
     <div class="dialog-actions"><button id="persona-edit" class="primary" disabled>Sửa</button><button id="persona-save" class="primary" hidden>Lưu</button><button id="persona-cancel" class="secondary" hidden>Huỷ</button><button id="persona-reload" class="secondary">Tải lại bản mới</button></div>
   </dialog>
+  <dialog id="history-dialog" class="source-dialog" aria-labelledby="history-title"><div class="dialog-header"><h2 id="history-title">Lịch sử chat</h2><button id="history-close" class="icon" aria-label="Đóng lịch sử chat">×</button></div><div id="history-list"></div></dialog>
   <dialog id="source-dialog" class="source-dialog" aria-labelledby="source-title"><div class="dialog-header"><h2 id="source-title">Nguồn của câu trả lời</h2><button id="source-close" class="icon" aria-label="Đóng nguồn">×</button></div><p id="source-label" class="eyebrow"></p><p id="source-text" class="source-text"></p></dialog>
 </body>
 </html>

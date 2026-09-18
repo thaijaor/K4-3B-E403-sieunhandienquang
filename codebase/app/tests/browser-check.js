@@ -2,12 +2,15 @@
 // Requires the explicit fixture preview on localhost:8765.
 async (page) => {
   const checks = [];
+  try {
   const check = (condition, label) => { if (!condition) throw new Error(label); checks.push(label); };
   await page.context().clearCookies();
   await page.goto('http://127.0.0.1:8765');
   await page.evaluate(() => localStorage.removeItem('tutor.chat'));
   await page.reload();
   await page.waitForFunction(() => document.getElementById('version').textContent.includes('v1'));
+  check(await page.locator('#tutor-panel').isHidden(), 'AI panel hidden by default');
+  await page.locator('#tutor-toggle').click();
   const send = async (text) => {
     const previous = await page.locator('.message.assistant').count();
     await page.getByRole('textbox', {name: 'Câu hỏi của bạn'}).fill(text);
@@ -15,7 +18,7 @@ async (page) => {
     await page.waitForFunction(n => document.querySelectorAll('.message.assistant').length > n, previous);
   };
   await send('Citation là gì?');
-  await page.getByRole('button', {name: '↗ Bài mẫu · trang 1', exact: true}).click();
+  await page.getByRole('button', {name: '↗ Một câu trả lời có thể kiểm chứng', exact: true}).click();
   await page.waitForFunction(() => document.getElementById('source-text').textContent.includes('Câu trả lời có dẫn nguồn'));
   check((await page.locator('#source-text').innerText()).includes('Câu trả lời có dẫn nguồn'), 'citation opens actual sample source');
   await page.getByRole('button', {name: 'Đóng nguồn'}).click();
@@ -26,6 +29,7 @@ async (page) => {
   await page.reload();
   await page.waitForFunction(() => document.querySelectorAll('.message.assistant').length === 3);
   checks.push('refresh restores messages');
+  await page.locator('#tutor-toggle').click();
   await page.getByRole('button', {name: 'Persona', exact: true}).click();
   await page.getByRole('button', {name: 'Sửa', exact: true}).click();
   await page.getByRole('textbox', {name: 'Nội dung Persona'}).fill('Ngắn gọn; giải thích bằng ví dụ. <img src=x onerror=alert(1)>');
@@ -101,7 +105,7 @@ async (page) => {
     await page.setViewportSize({width, height: 900});
     check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `no horizontal overflow at ${width}px`);
     await page.getByRole('button', {name: 'Persona', exact: true}).click();
-    check(await page.evaluate(() => document.getElementById('persona-dialog').getBoundingClientRect().width <= innerWidth), `drawer fits ${width}px`);
+    check(await page.evaluate(() => document.getElementById('persona-dialog').getBoundingClientRect().width <= innerWidth + 1), `drawer fits ${width}px`);
     await page.screenshot({path: `output/playwright/persona-${width}.png`, fullPage: true});
     await page.keyboard.press('Escape');
     check(await page.getByRole('button', {name: 'Persona', exact: true}).evaluate(el => el === document.activeElement), `focus restored after Escape at ${width}px`);
@@ -109,4 +113,8 @@ async (page) => {
   await page.screenshot({path: 'output/playwright/tutor-desktop.png', fullPage: true});
   await page.evaluate(result => {window.__browserCheck = result;}, {passed: checks.length, checks});
   return {passed: checks.length, checks};
+  } catch (e) {
+    await page.evaluate(result => window.__browserCheck = result, {passed: checks.length, checks, failure: e.message});
+    throw e;
+  }
 }

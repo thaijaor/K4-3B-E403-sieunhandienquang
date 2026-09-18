@@ -3,6 +3,10 @@ import httpx
 from fastapi import HTTPException
 
 
+class ContractError(Exception):
+    """A successful upstream response was not valid JSON."""
+
+
 class Services:
     def __init__(self, ai_url="", persona_url="", key=""):
         self.ai_url = ai_url.rstrip("/")
@@ -26,8 +30,13 @@ class Services:
             if response.status_code == 404:
                 raise HTTPException(404, "Dữ liệu tích hợp không còn tồn tại.")
             response.raise_for_status()
-            return response.json()
+            try:
+                return response.json()
+            except ValueError as exc:
+                if kind == "ai":
+                    raise ContractError("Invalid AI JSON") from exc
+                raise HTTPException(502, "Persona trả JSON không hợp lệ.") from exc
         except httpx.TimeoutException:
             raise HTTPException(504, "Dịch vụ phản hồi quá lâu. Vui lòng thử lại.")
-        except (httpx.HTTPError, ValueError):
+        except httpx.HTTPError:
             raise HTTPException(502, "Dịch vụ tích hợp lỗi hoặc trả dữ liệu không hợp lệ.")

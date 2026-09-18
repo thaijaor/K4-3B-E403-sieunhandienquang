@@ -6,6 +6,7 @@ import os
 import secrets
 import sqlite3
 import time
+import threading
 import uuid
 from contextlib import contextmanager
 from pathlib import Path
@@ -16,7 +17,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from integrations import Services
+from integrations import Services, ContractError
+from lessons import load_lessons
 from models import Accept, AIReply, NewChat, Persona, PersonaWrite, Question, Undo, Version
 
 HERE = Path(__file__).parent
@@ -27,7 +29,9 @@ def create_app(db_path=None, services=None, lessons_path=None):
     db_path = Path(db_path or os.getenv("TUTOR_DB", HERE / "data" / "tutor.sqlite"))
     db_path.parent.mkdir(parents=True, exist_ok=True)
     services = services or Services(os.getenv("AI_API_URL", ""), os.getenv("PERSONA_API_URL", ""), os.getenv("SERVICE_API_KEY", ""))
-    lessons = json.loads(Path(lessons_path or os.getenv("LESSONS_FILE", HERE / "lessons.sample.json")).read_text(encoding="utf-8"))
+    lessons = load_lessons(lessons_path or os.getenv("LESSONS_FILE", HERE / "lessons.sample.json"))
+    failed_updates = {}
+    recovery_lock = threading.Lock()
     lesson_map = {lesson["id"]: lesson for lesson in lessons}
     sources = {source["id"]: (lesson["id"], source) for lesson in lessons for source in lesson["sources"]}
     if len(lesson_map) != len(lessons) or len(sources) != sum(len(x["sources"]) for x in lessons):
@@ -40,6 +44,13 @@ def create_app(db_path=None, services=None, lessons_path=None):
         db.execute("PRAGMA foreign_keys=ON")
         try:
             with db:
+                with recovery_lock:
+                    for turn_id, (detail, rotate) in list(failed_updates.items()):
+                        db.execute("UPDATE turns SET status='failed',error=? WHERE id=? AND status='pending'", (detail, turn_id))
+                        if rotate:
+                            db.execute("UPDATE ai_keys SET key=? WHERE turn_id=?", (str(uuid.uuid4()), turn_id))
+                    db.commit()
+                    failed_updates.clear()
                 yield db
         finally:
             db.close()
@@ -56,6 +67,7 @@ def create_app(db_path=None, services=None, lessons_path=None):
             result TEXT, error TEXT, created_at REAL NOT NULL,
             UNIQUE(chat_id, request_id));
         CREATE UNIQUE INDEX IF NOT EXISTS one_pending_turn ON turns(chat_id) WHERE status='pending';
+        CREATE TABLE IF NOT EXISTS ai_keys (turn_id TEXT PRIMARY KEY REFERENCES turns(id), key TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS proposals (
             id TEXT PRIMARY KEY, owner TEXT NOT NULL, chat_id TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'pending');
@@ -147,6 +159,12 @@ def create_app(db_path=None, services=None, lessons_path=None):
             db.execute("INSERT INTO chats VALUES (?,?,?,?,?)", (chat_id, user, body.lesson_id, json.dumps(snapshot, ensure_ascii=False), time.time()))
         return {"id": chat_id, "lesson_id": body.lesson_id, "persona_version": snapshot["version"] if snapshot else None, "messages": []}
 
+    @app.get("/api/chats")
+    def list_chats(user=Depends(owner)):
+        with connect() as db:
+            rows = db.execute("SELECT id,lesson_id,created_at FROM chats WHERE owner=? ORDER BY created_at DESC,id DESC", (user,)).fetchall()
+        return [{**dict(row), "title": lesson_map.get(row["lesson_id"], {}).get("title", "Bài học không còn tồn tại")} for row in rows]
+
     @app.get("/api/chats/{chat_id}")
     def get_chat(chat_id: str, user=Depends(owner)):
         chat = chat_for(chat_id, user)
@@ -156,7 +174,7 @@ def create_app(db_path=None, services=None, lessons_path=None):
         messages = []
         for turn in turns:
             question = json.loads(turn["input"])
-            messages.append({"role": "user", "text": question["text"], "status": turn["status"], "request": question, "error": turn["error"]})
+            messages.append({"role": "user", "text": question["text"], "status": turn["status"], "request": question, "error": turn["error"], "retryable": turn["status"] == "failed" and turn["id"] == turns[-1]["id"]})
             if turn["result"]:
                 reply = json.loads(turn["result"])
                 for proposal in reply["persona_proposals"]:
@@ -181,17 +199,23 @@ def create_app(db_path=None, services=None, lessons_path=None):
                 return json.loads(old["result"])
             if db.execute("SELECT 1 FROM turns WHERE chat_id=? AND status='pending'", (chat_id,)).fetchone():
                 raise HTTPException(409, "Hội thoại đang xử lý một câu hỏi.")
+            if old:
+                latest = db.execute("SELECT id FROM turns WHERE chat_id=? ORDER BY created_at DESC,id DESC LIMIT 1", (chat_id,)).fetchone()
+                if latest["id"] != old["id"]:
+                    raise HTTPException(409, "Chỉ có thể thử lại câu hỏi cuối. Hãy gửi lại thành câu hỏi mới.")
             turn_id = old["id"] if old else str(uuid.uuid4())
             if old:
                 db.execute("UPDATE turns SET status='pending',error=NULL WHERE id=?", (turn_id,))
             else:
                 db.execute("INSERT INTO turns VALUES (?,?,?,?,?,NULL,NULL,?)", (turn_id, chat_id, body.client_request_id, encoded, "pending", time.time()))
+            db.execute("INSERT OR IGNORE INTO ai_keys VALUES (?,?)", (turn_id, turn_id))
+            ai_key = db.execute("SELECT key FROM ai_keys WHERE turn_id=?", (turn_id,)).fetchone()["key"]
             completed = db.execute("SELECT input,result FROM turns WHERE chat_id=? AND status='complete' ORDER BY created_at,id", (chat_id,)).fetchall()
-        history = []
-        for previous in completed:
-            history.extend([{"role": "user", "text": json.loads(previous["input"])["text"]}, {"role": "assistant", "text": json.loads(previous["result"])["text"]}])
         try:
-            result = services.request("ai", "POST", "/respond", user, {"request_id": turn_id, "chat_id": chat_id, "lesson_id": chat["lesson_id"], "text": body.text, "history": history, "selected_source_ids": body.selected_source_ids, "persona": json.loads(chat["persona"])}, turn_id)
+            history = []
+            for previous in completed:
+                history.extend([{"role": "user", "text": json.loads(previous["input"])["text"]}, {"role": "assistant", "text": json.loads(previous["result"])["text"]}])
+            result = services.request("ai", "POST", "/respond", user, {"request_id": ai_key, "chat_id": chat_id, "lesson_id": chat["lesson_id"], "text": body.text, "history": history, "selected_source_ids": body.selected_source_ids, "persona": json.loads(chat["persona"])}, ai_key)
             reply = AIReply.model_validate(result)
             if reply.decision == "answer" and not reply.citations:
                 raise ValueError("Answer without citation")
@@ -211,12 +235,25 @@ def create_app(db_path=None, services=None, lessons_path=None):
                     db.execute("INSERT INTO proposals (id,owner,chat_id) VALUES (?,?,?)", (proposal.id, user, chat_id))
                 db.execute("UPDATE turns SET status='complete',result=? WHERE id=?", (json.dumps(response, ensure_ascii=False), turn_id))
             return response
-        except (ValidationError, ValueError, sqlite3.IntegrityError):
+        except (ValidationError, ValueError, ContractError, sqlite3.IntegrityError):
+            rotate = True
             failure = HTTPException(502, "AI trả dữ liệu hoặc citation không đúng contract.")
         except HTTPException as exc:
             failure = exc
-        with connect() as db:
-            db.execute("UPDATE turns SET status='failed',error=? WHERE id=?", (failure.detail, turn_id))
+            rotate = exc.status_code < 500
+        except Exception:
+            LOG.exception("Unexpected failure processing turn %s", turn_id)
+            failure = HTTPException(500, "Lượt hỏi gặp lỗi máy chủ. Vui lòng thử lại.")
+            rotate = False
+        # Keep cleanup queued if SQLite is temporarily locked; the next DB access
+        # reconciles it before exposing the chat or accepting another message.
+        with recovery_lock:
+            failed_updates[turn_id] = (failure.detail, rotate)
+        try:
+            with connect():
+                pass
+        except sqlite3.Error:
+            LOG.exception("Deferred failed-turn cleanup for %s", turn_id)
         raise failure
 
     @app.get("/api/persona")
