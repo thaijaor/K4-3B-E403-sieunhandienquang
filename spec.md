@@ -9,13 +9,13 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 - **Job executor + workflow:** học viên K4 khoá AI20K — gồm cả người đã đi làm IT lẫn người chưa từng lập trình — đang đọc một bài trên VLearn → gặp điểm chưa hiểu → hỏi Tutor ngay trong bài đang mở → nhận câu trả lời dài, chung cho mọi người → gõ thêm "ngắn gọn thôi" / "dễ hiểu hơn" / "cho ví dụ" → câu sau, chat sau lại phải dặn lại.
 - **Core JTBD:** Khi đang đọc bài và gặp chỗ chưa hiểu, tôi muốn được giải thích theo đúng cách mình dễ hiểu mà không phải dặn lại mỗi lần, để hiểu nhanh và học tiếp.
 - **Problem statement:** Khi hỏi để hiểu bài đang mở, học viên phải nhắc đi nhắc lại cách trả lời mình muốn (ngắn gọn, dễ hiểu, có ví dụ); không nhắc thì nhận câu trả lời dài, chung cho mọi người, phải hỏi thêm lượt nữa mới hiểu.
-- **Evidence** (chuẩn B — mining chatlog `data/vlearn-pack/chatlog/tutor_turns.csv`, K4 = `cohort_hint = K4`, 3.097 lượt / 448 học viên, 09–15/9; câu hỏi lấy phần sau tiền tố ngữ cảnh `(Đang học phần …)`):
+- **Evidence** (chuẩn A — khảo sát và chuẩn B — mining chatlog `data/vlearn-pack/chatlog/tutor_turns.csv`, K4 = `cohort_hint = K4`, 3.097 lượt / 448 học viên, 09–15/9; câu hỏi lấy phần sau tiền tố ngữ cảnh `(Đang học phần …)`):
   - **Phải dặn lại kiểu trả lời:** **172 lượt / 95 học viên** K4 đòi đổi kiểu trả lời — 43 "ngắn gọn / ngắn hơn / dài quá / tóm tắt lại", 37 "không hiểu / dễ hiểu hơn / đơn giản hơn", 92 "chi tiết hơn / sâu hơn / kỹ hơn"; 9–14 học viên lặp lại cùng yêu cầu ≥ 2 lần. Cách đếm: regex không phân biệt hoa thường trên câu hỏi (các cụm ở trên), chưa đọc tay toàn bộ.
   - **Dặn rồi vẫn không đổi:** 76 lượt (mọi khoá) học viên đòi "ngắn gọn / ngắn hơn / trả lời ngắn" nhận câu trả lời trung vị **214 từ** (25–75%: 143–318), dài ngang mức chung 206 từ. Cách đếm: đếm từ `tutor_reply` của các lượt khớp regex.
   - **Một độ dài không vừa mọi người:** câu bị 👎 có trung vị 83 từ, câu được 👍 182 từ; cùng lúc 92 lượt đòi "chi tiết hơn" và 80 lượt đòi "ngắn / dễ hiểu hơn" → cần nhớ theo từng người, không chỉ rút ngắn cho tất cả.
   - **Test Tutor:** 14/16 câu trả lời vượt ngân sách độ dài theo loại câu hỏi. Cách đếm: mở chat mới cho từng câu, đếm số từ, so với ngưỡng 30–180 từ. Ví dụ `V01`, `V02`, `V08`, `V13`.
   - **Citation (điều kiện giữ nguyên):** 838/2.555 lượt K4 không phải preset có `has_citation = False` (32,8%). Cách đếm: lọc `cohort_hint = K4`, `is_preset = False`, đếm `has_citation != True`. Ví dụ `T10311`, `T11098`.
-  - **Khảo sát** (chuẩn A, bổ sung — form *Khảo sát trải nghiệm VLearn Tutor*, **n = 18** học viên ngoài nhóm, chưa đạt ngưỡng 20): 9/18 (50%) gặp câu trả lời lan man, 7/18 (39%) gặp câu trả lời dài hơn cần, 6/18 (33%) gặp Tutor tự đoán khi câu hỏi chưa rõ; 15/18 (83%) mất thêm ≥ 1 phút để đọc/kiểm chứng; 5/18 dùng ChatGPT/công cụ khác để kiểm tra lại. 2 câu về dặn lại và ghi nhớ mới thêm (n = 3): 2/3 "thường xuyên" phải nhắc lại; 3/3 muốn Tutor ghi nhớ (1 người "nếu tôi xem và sửa được"). 14/18 đồng ý dùng thử prototype.
+  - **Khảo sát** (chuẩn A — form *Khảo sát trải nghiệm VLearn Tutor*, **n = 20** học viên ngoài nhóm; log đủ câu hỏi + từng câu trả lời: [`evidence/khao-sat.md`](evidence/khao-sat.md)): **15/20 (75%) xác nhận pain** — gặp câu trả lời dài hơn cần, lan man, hoặc Tutor tự đoán khi câu hỏi chưa rõ; 18/20 (90%) gặp ít nhất một vấn đề. 17/20 mất thêm ≥ 1 phút để đọc/kiểm chứng; 5/20 phải dùng ChatGPT/công cụ khác để kiểm tra lại. 2 câu thêm sau (n = 5): 4/5 "thường xuyên" phải nhắc lại cách trả lời; 5/5 muốn Tutor ghi nhớ (1 người "nếu tôi xem và sửa được"). 16/20 đồng ý dùng thử prototype.
   - **Quote nguyên văn** (câu hỏi học viên K4 → độ dài câu trả lời):
     - `T13141` — "Trình bày rõ ràng dễ hiểu hơn về nội dung trang này cho người không hiểu gì về AI" → 308 từ
     - `T13403` — "hãy giải thích về 2 mode yolo pose và vitpose theo cách dễ hiểu hơn" → 442 từ
@@ -29,12 +29,12 @@ Số liệu K4, 7 ngày (09–15/9), 448 học viên dùng Tutor.
 
 | Ứng viên | Bao nhiêu người | Tần suất | Tốn gì mỗi lần | Khả thi trong 39h |
 |---|---|---|---|---|
-| **A. Phải dặn lại kiểu trả lời (Persona)** | 95 học viên | 172 lượt / 7 ngày; 9–14 người lặp ≥ 2 lần | Thêm 1 lượt hỏi + đọc lại ~214 từ; 83% mất thêm ≥ 1 phút (khảo sát) | Cao — prompt + lưu văn bản ngắn |
-| B. Câu trả lời thiếu citation | 191 học viên | 839 lượt (27%) | Tự dò slide 1–3 phút (11/18 khảo sát) | Cao — retrieval + guard |
+| **A. Phải dặn lại kiểu trả lời (Persona)** | 95 học viên | 172 lượt / 7 ngày; 9–14 người lặp ≥ 2 lần | Thêm 1 lượt hỏi + đọc lại ~214 từ; 17/20 mất thêm ≥ 1 phút (khảo sát) | Cao — prompt + lưu văn bản ngắn |
+| B. Câu trả lời thiếu citation | 191 học viên | 839 lượt (27%) | Tự dò slide 1–3 phút (13/20 khảo sát mất 1–3 phút) | Cao — retrieval + guard |
 | C. Câu hỏi mơ hồ, Tutor đoán thay vì hỏi lại | 94 học viên | 177 câu ≤ 12 ký tự; Tutor hỏi ngược 6 lần | Hỏi lại 1 lượt ("ý tôi là…" — `T11780`, `T11519`) | Trung bình — khó chấm đúng/sai |
 | D. Tutor đưa đáp án quiz | 27 học viên | 115 lượt trong phần Quiz/Ôn tập | Học không thật; rủi ro liêm chính | Cao nhưng ít người |
 
-- **Chọn A** vì là pain nói thẳng từ học viên (172 lượt tự gõ), có bằng chứng "dặn rồi vẫn không đổi" (214 từ), và là thứ duy nhất cần **nhớ theo từng người** — tutor hiện tại không làm được dù có sửa prompt chung. Khảo sát: 3/3 muốn được ghi nhớ.
+- **Chọn A** vì là pain nói thẳng từ học viên (172 lượt tự gõ), có bằng chứng "dặn rồi vẫn không đổi" (214 từ), và là thứ duy nhất cần **nhớ theo từng người** — tutor hiện tại không làm được dù có sửa prompt chung. Khảo sát: 15/20 xác nhận pain; 5/5 muốn được ghi nhớ.
 - **B giữ làm điều kiện bắt buộc**, không phải ứng viên riêng: mọi câu trả lời theo Persona vẫn phải có citation (luật cố định §4).
 - **Loại C:** tần suất cao nhưng đúng/sai khó chấm; gộp thành nhánh *hỏi lại* của lõi.
 - **Loại D:** ít người (27); xử lý bằng guardrail quiz có sẵn, không làm thành tính năng.
@@ -174,7 +174,7 @@ Persona là tính năng chính, nên phần lớn bộ đo dành cho Persona; l�
 - **Nguyễn Hồng Thái** (đội trưởng) — product/spec: evidence + impact, lát cắt, automation, HAX/PAIR, slide, pitch, nộp form.
 - **Trần Mạnh Tùng** — build: retrieval nguồn, gọi LLM, quyết định trả lời/hỏi lại/từ chối, UI citation, log; video CP3, CP5.
 - **Nguyễn Mạnh Cường** — eval: golden set ≥20 case, quality bar, bảng kết quả, 4 lớp chỗ khó + kịch bản.
-- **Willing users:** 14/18 học viên ngoài nhóm đồng ý dùng thử ~10 phút, 3 người "có thể" ([khảo sát](https://docs.google.com/forms/d/e/1FAIpQLSelpNvWBFEtqST_UcfjQ9s3gfIvXzC-UhnVL3zSrf01_uj6Pw/viewform); form không thu tên — nhóm liên hệ trực tiếp). **Kế hoạch validation (CP5):** ≥ 5 người ngoài nhóm, mỗi người ~10 phút theo guide §4.2 (giao task theo outcome, im lặng quan sát, hỏi sau); nhật ký + quote nguyên văn trong `validation/`; ≥ 1 thay đổi ghi vào §9.
+- **Willing users:** 16/20 học viên ngoài nhóm đồng ý dùng thử ~10 phút, 3 người "có thể" ([khảo sát](https://docs.google.com/forms/d/e/1FAIpQLSelpNvWBFEtqST_UcfjQ9s3gfIvXzC-UhnVL3zSrf01_uj6Pw/viewform); form không thu tên — nhóm liên hệ trực tiếp). **Kế hoạch validation (CP5):** ≥ 5 người ngoài nhóm, mỗi người ~10 phút theo guide §4.2 (giao task theo outcome, im lặng quan sát, hỏi sau); nhật ký + quote nguyên văn trong `validation/`; ≥ 1 thay đổi ghi vào §9.
 
 ## §9. Changelog
 | Thời điểm | Đổi gì | Vì sao (trỏ về feedback/case nào) |
@@ -190,3 +190,4 @@ Persona là tính năng chính, nên phần lớn bộ đo dành cho Persona; l�
 | 18/9 18:57 | Golden set đổi sang 39 case với Persona là trọng tâm (A ghi nhớ 12 · B tuân theo Persona 9 · C không phá luật 5 · E dặn lại 3 · D lõi 10); chốt quality bar §7 | Persona là tính năng chính khi trình bày; bộ 20 case CP3 chỉ đo lõi, không có số nào về Persona |
 | 18/9 19:25 | Lượt 1–2 trên 39 case; sửa: chặn ghi nhớ đổi định dạng, định nghĩa "ngắn gọn" trong prompt, khớp "nontech"; unit test không ghi trace | A08, E01/E03, A01 ở lượt 1 (`eval/eval_report_run1.md`) |
 | 18/9 19:40 | Thái + Cường chấm 16 mục phần người chấm của lượt 2 (khớp 16/16); cập nhật kết quả: tuân theo Persona 78%, E02 dặn lại 2 | Hoàn tất lượt 2 theo §7; điểm yếu còn lại là giải thích thuật ngữ cho người non-tech |
+| 18/9 19:55 | Khảo sát đủ n = 20, 15/20 (75%) xác nhận pain → đạt chuẩn A; thêm log `evidence/khao-sat.md` | Bổ sung bằng chứng khảo sát cho R1 (trước đó n = 18) |
