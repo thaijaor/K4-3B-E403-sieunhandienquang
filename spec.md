@@ -29,8 +29,8 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 - **Lát cắt một câu:** Khi một học viên đang đọc bài trên VLearn hỏi để làm rõ một nội dung, AI dựa trên **Persona** của học viên và bằng chứng trong bài đang mở để quyết định **trả lời theo đúng cách học viên đã chọn, hỏi lại hay từ chối**, để học viên nhận câu trả lời vừa ý, có citation mở được mà không phải dặn lại.
 - **Persona (PERSONA.md):** văn bản ngắn ghi nền tảng và kiểu trả lời học viên muốn; học viên và Tutor cùng sửa được.
   - Persona gồm 3 mục: *Tính cách Tutor* (học viên đặt) · *Tutor nhớ về bạn* (Tutor ghi khi học viên đồng ý) · *Không được nhớ* (học viên tự thêm). Tối đa 2.000 ký tự.
-  - Chat chụp snapshot Persona lúc tạo; sửa Persona chỉ áp dụng từ **chat mới**.
-  - Tutor chỉ **đề xuất** thay đổi kèm diff `[Lưu] [Sửa] [Không]`; không tự ghi. Sau khi lưu có `Hoàn tác`.
+  - Sửa Persona áp dụng ngay từ **câu hỏi tiếp theo**, kể cả trong chat đang mở. Không có version hay hoàn tác.
+  - Tutor chỉ **đề xuất** thay đổi kèm diff `[Lưu] [Sửa] [Không]`; không tự ghi.
 - **Giao diện:** layout như VLearn — cột trái *Nội dung bài học* (nhóm bài dạng accordion, bài đang mở gắn "Đang học"), giữa là bài đọc, panel **Trợ giảng AI** bên phải mặc định ẩn, mở bằng nút "Đặt câu hỏi với AI". Header panel: `Persona` · `+ Chat mới` · lịch sử · đóng.
 - **Luật cố định** (system prompt, Persona không ghi đè):
   - AI luôn phải chỉ khẳng định điều có trong bài đang mở, kèm citation mở được.
@@ -41,11 +41,10 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
   - Không trả lời bằng nguồn ngoài bài đang mở.
   - Không làm/đưa đáp án quiz; không thay đổi tiến độ học.
   - Persona không nhớ giờ học, điểm số, thông tin cá nhân nhạy cảm; không chia sẻ cho học viên khác/giảng viên.
-  - Không áp Persona mới vào chat đang mở.
   - Demo không hiển thị Slide/Video — chỉ bài Markdown.
 - **Mức prototype:** [ ] Sketch [x] Mock [ ] Working
-  - **Thật:** lời gọi LLM quyết định trả lời / hỏi lại / từ chối và sinh citation; backend kiểm tra citation thuộc bài đang mở.
-  - **Mock:** học liệu (bài Markdown tự viết, không dùng data pack), phiên học viên ẩn danh (không nối đăng nhập VLearn), Persona service *(chưa chốt: thật hay giả lập)*.
+  - **Thật:** lời gọi LLM quyết định trả lời / hỏi lại / từ chối và sinh citation; backend kiểm tra citation thuộc bài đang mở; Persona lưu thật (SQLite trong agent service), Tutor đề xuất ghi nhớ bằng tool call.
+  - **Mock:** học liệu (bài Markdown tự viết, không dùng data pack), phiên học viên ẩn danh (không nối đăng nhập VLearn).
 - **Automation:** [ ] augment [x] conditional [ ] automate — AI tự trả lời khi có căn cứ trong bài; thiếu căn cứ thì hỏi lại hoặc từ chối. Lý do: trả lời sai nguồn làm học viên học sai và mất niềm tin, sửa đắt; case mơ hồ để học viên quyết. Ghi Persona luôn cần học viên xác nhận (augment).
 - **§4b. Nguyên tắc đã áp dụng:**
 
@@ -56,7 +55,7 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
   | G11 — Giải thích vì sao | Nút citation dưới mỗi câu trả lời mở đúng đoạn nguồn trong bài |
   | G9 — Sửa dễ dàng | Nút `Ngắn hơn` · `Có ví dụ` · `Mình hỏi ý khác` dưới mỗi câu trả lời |
   | G13/G14 — Học từ hành vi, thay đổi thận trọng | Thẻ đề xuất ghi nhớ Persona kèm diff, chỉ lưu khi bấm `Lưu` |
-  | G17 — Quyền kiểm soát tổng | Drawer Persona: xem/sửa, xoá phần "Tutor nhớ về bạn", `Hoàn tác` |
+  | G17 — Quyền kiểm soát tổng | Drawer Persona: xem/sửa trực tiếp, xoá phần "Tutor nhớ về bạn"; thêm mục "Không được nhớ" để chặn Tutor đề xuất |
 
 ## §5. Kiểu lỗi — 4 lớp chỗ khó + kịch bản
 *(bản nháp từ mock CP2 và Persona — Cường soát, bổ sung)*
@@ -74,8 +73,8 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 | Học viên báo "Chưa đúng ý" | ④ Domain | Hỏi lại chỗ chưa đúng, trả lời lại có citation | G9 |
 
 ## §6. Bốn đường đi của trải nghiệm
-- **Happy path:** Persona ghi "ngắn gọn, có ví dụ" → mở chat mới hỏi "Temperature là gì?" → trả lời ngắn kèm ví dụ + citation mở được, không cần dặn.
-- **Ghi nhớ:** học viên gõ "ngắn gọn thôi" → Tutor trả lời ngắn và đề xuất ghi vào Persona kèm diff → học viên bấm `Lưu` → chat mới tự trả lời ngắn.
+- **Happy path:** Persona ghi "ngắn gọn, có ví dụ" → hỏi "Temperature là gì?" → trả lời ngắn kèm ví dụ + citation mở được, không cần dặn.
+- **Ghi nhớ:** học viên gõ "ngắn gọn thôi" → Tutor trả lời ngắn và đề xuất ghi vào Persona kèm diff → học viên bấm `Lưu` → từ câu hỏi tiếp theo tự trả lời ngắn.
 - **Low-confidence (②):** "Giải thích đoạn này" → hỏi lại bằng lựa chọn (tóm tắt / dễ hiểu kèm ví dụ / chi tiết).
 - **Failure / không căn cứ (①):** "Kill switch là gì?" → nói rõ bài không có + gợi ý bước tiếp.
 - **Correction:** "Chưa đúng ý" → hỏi lại chỗ chưa đúng rồi trả lời lại; hoặc bấm `Ngắn hơn` / `Có ví dụ`.
@@ -106,3 +105,4 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 | 18/9 09:42 | FE/BE ứng dụng Tutor + UI Persona; AI và Persona là service riêng nối qua contract (PR #4, đang review) | Tách ranh giới để build song song |
 | 18/9 11:20 | Đổi UI theo layout VLearn: cột bài học bên trái, panel AI mở bằng nút; demo chỉ bài Markdown mock | Giống trải nghiệm VLearn học viên đang dùng; không đưa học liệu thật lên repo công khai |
 | 18/9 12:00 | Đổi pain và lát cắt: Persona thành trung tâm thay vì phần mở rộng; citation giữ là điều kiện bắt buộc của câu trả lời | Nỗi đau rõ nhất là phải nhắc lại cách trả lời (172 lượt, 9–14 học viên lặp ≥2 lần); canvas CP1 giữ nguyên để đối chiếu |
+| 18/9 15:00 | Bỏ version, hoàn tác và snapshot Persona theo chat: sửa Persona áp dụng từ câu hỏi tiếp theo (PR #7) | Học viên sửa Persona để được trả lời khác ngay, bắt mở chat mới là thêm một bước; version/hoàn tác tăng độ phức tạp mà lát cắt không cần |
