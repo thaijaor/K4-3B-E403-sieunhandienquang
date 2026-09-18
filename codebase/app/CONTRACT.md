@@ -24,7 +24,7 @@ Response:
 }
 ```
 
-`decision`: answer/clarify/abstain. Answer phải có citation. `locator` là chuỗi đường dẫn Markdown + `#anchor` đúng nguồn do loader tạo, không phải URL do model dựng. Actions chỉ gồm send_message hoặc open_source (value là source ID).
+`decision`: answer/chat/clarify/abstain. Answer phải có citation. `chat` là trả lời thường không cần citation (chào hỏi, cảm ơn, câu không liên quan bài); FE không gắn badge. `locator` là chuỗi đường dẫn Markdown + `#anchor` đúng nguồn do loader tạo, không phải URL do model dựng. Actions chỉ gồm send_message hoặc open_source (value là source ID).
 
 Proposal: `{id,base_version,before,after}`. ID gồm chữ/số/gạch ngang, tối đa 80 ký tự. AI/Persona service phải đăng ký proposal theo owner trước khi trả ID. Text Persona tối đa 2.000 ký tự. Không tự lưu proposal; giữ luật system/citation/quiz ở phía AI. Không để Persona ghi đè luật cố định.
 

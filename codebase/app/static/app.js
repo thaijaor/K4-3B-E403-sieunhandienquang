@@ -129,7 +129,8 @@ function renderMessages() {
   }
   for (const m of state.chat.messages) {
     const bubble = node('article', undefined, `message ${m.role === 'user' ? 'user' : 'assistant'}`);
-    if (m.role === 'assistant') bubble.append(node('span', {answer: 'TRẢ LỜI CÓ NGUỒN', clarify: 'CẦN LÀM RÕ', abstain: 'CHƯA THỂ TRẢ LỜI'}[m.decision], `badge ${m.decision}`));
+    const badge = {answer: 'TRẢ LỜI CÓ NGUỒN', clarify: 'CẦN LÀM RÕ', abstain: 'CHƯA THỂ TRẢ LỜI'}[m.decision];
+    if (m.role === 'assistant' && badge) bubble.append(node('span', badge, `badge ${m.decision}`));
     bubble.append(node('p', m.text));
     if (m.status === 'pending') bubble.append(node('span', 'Đang chờ Tutor…', 'small muted'));
     if (m.status === 'failed') {
