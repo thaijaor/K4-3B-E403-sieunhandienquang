@@ -1,0 +1,26 @@
+[
+  {
+    "id": "demo-grounding",
+    "title": "Đọc câu trả lời cùng bằng chứng",
+    "subtitle": "Bài mẫu tổng hợp để thử giao diện • Không phải học liệu VLearn",
+    "sample": true,
+    "sources": [
+      {
+        "id": "sample-01",
+        "kind": "slide",
+        "locator": "1",
+        "label": "Bài mẫu · trang 1",
+        "title": "Một câu trả lời có thể kiểm chứng",
+        "text": "Câu trả lời có dẫn nguồn giúp người đọc đối chiếu phát biểu với tài liệu. Một citation cần chỉ đến đúng đoạn hoặc trang chứa bằng chứng. Việc có đường dẫn không tự chứng minh nội dung trả lời là đúng."
+      },
+      {
+        "id": "sample-02",
+        "kind": "transcript",
+        "locator": "sample-segment-02",
+        "label": "Bài mẫu · đoạn 02",
+        "title": "Khi chưa đủ căn cứ",
+        "text": "Nếu chưa rõ người học đang hỏi đoạn nào, trợ giảng cần hỏi lại để xác định ý. Nếu tài liệu đang mở không có căn cứ trả lời, trợ giảng nên nói rõ giới hạn và gợi ý bước tiếp theo."
+      }
+    ]
+  }
+]
