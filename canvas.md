@@ -1,5 +1,7 @@
 # Canvas CP1 — Nhóm sieunhandienquang · 3B · E403
 
+> Bản nộp CP1 (17/9 19:30). Ngày 18/9 nhóm đổi pain và lát cắt theo Persona — bản hiện hành ở [`spec.md`](spec.md) §1, §4; lý do ở §9.
+
 | # | Dòng | Nội dung |
 |---|---|---|
 | 1 | Track + đề | **A1 · Tối ưu AI Tutor VLearn hiện có** — trả lời ngắn, đủ ý và có citation kiểm chứng được. |
