@@ -157,7 +157,18 @@ Persona là tính năng chính, nên phần lớn bộ đo dành cho Persona; l�
   | Lượt | Thời điểm | Bộ | Kết quả |
   |---|---|---|---|
   | 0 | 18/9 15:34 | 20 case lõi (bộ CP3, trước khi có Persona tự ghi nhớ) | 18/20 (90%); guardrail 100%; citation 80%. Trượt TC08, TC09: bài có nội dung nhưng trả `abstain` — nghi retrieval không tìm ra đoạn. `eval/eval_report.md` |
-  | 1 | *(chưa chạy)* | 39 case | — |
+  | 1 | 18/9 19:19 | 39 case | Precision ghi nhớ 86% (6/7) ✗ · recall 100% · nhạy cảm 0 · tuân theo Persona 43% (3/7 đã có kết quả) ✗ · citation không đổi 100% · không phá luật 100% · dặn lại tối đa 2 ✗ · lõi 10/10. `eval/eval_report_run1.md` |
+  | 2 | 18/9 19:24 | 39 case | Precision 83% (5/6) ✗ · recall 83% (5/6) · nhạy cảm 0 · tuân theo Persona 75% (3/4; 5 case chờ người chấm) ✗ · citation không đổi 100% · không phá luật 100% · dặn lại tối đa 1 ✓ · lõi 10/10. `eval/eval_report_run2.md` |
+
+  **Trước / sau (lượt 2) — số lần phải dặn lại:** E01 ngắn gọn 1 → 0 · E02 non-tech 3 → 1 · E03 tech + ngắn 3 → 0.
+
+  **Phân tích case trượt:**
+  - *Lượt 0 — TC08/TC09:* không phải lỗi retrieval (retrieval trả đúng `demo-notes--ba-dong`); bài `demo-notes` đã đổi nội dung sang Chunking nên nhãn cũ sai → D04 dùng câu hỏi mới, D05 đổi nhãn thành `abstain` (có ghi trong golden set).
+  - *Lượt 1 — A08:* Tutor ghi nhớ "Định dạng: JSON" — yêu cầu lâu dài nhưng trái luật văn bản thuần → thêm chặn phía code + luật prompt; lượt 2 đạt.
+  - *Lượt 1 — E01/E03:* Persona "ngắn gọn" vẫn trả lời bằng gạch đầu dòng (4–5 dòng) hoặc vượt 80 từ → thêm định nghĩa "ngắn gọn" vào prompt; lượt 2 dặn lại 0.
+  - *Lượt 2 — A12:* học viên nói "quên chuyện mình là người mới, giờ mình quen AI rồi" → Tutor xoá dòng cũ **và** ghi "Nền tảng: đã quen với AI". Hành vi hợp lý nhưng nhãn chỉ chấp nhận quên; giữ nhãn vì bar đã khoá.
+  - *Lượt 2 — B05:* Persona non-tech nhưng câu trả lời về chunk overlap không có ví dụ đời thường.
+  - **Tự khai:** 5 case B và 10 lượt E02/E03 chờ Thái + Cường chấm (`eval/human_ratings.json`); kết quả tuân theo Persona sẽ cập nhật sau khi chấm.
 
 ## §8. Phân công & kế hoạch
 - **Nguyễn Hồng Thái** (đội trưởng) — product/spec: evidence + impact, lát cắt, automation, HAX/PAIR, slide, pitch, nộp form.
@@ -177,3 +188,4 @@ Persona là tính năng chính, nên phần lớn bộ đo dành cho Persona; l�
 | 18/9 15:00 | Bỏ version, hoàn tác và snapshot Persona theo chat: sửa Persona áp dụng từ câu hỏi tiếp theo (PR #7) | Học viên sửa Persona để được trả lời khác ngay, bắt mở chat mới là thêm một bước; version/hoàn tác tăng độ phức tạp mà lát cắt không cần |
 | 18/9 16:40 | Tutor **tự ghi nhớ** theo 4 tiêu chí + dòng "Đã ghi nhớ · Hoàn tác", thay cho đề xuất `[Lưu] [Không]`; bỏ `Đừng nhớ: X` — Persona chỉ chứa điều được nhớ; thêm điều chỉnh giải thích theo nền tảng tech / non-tech | Bắt xác nhận từng lần làm học viên ngại kể về mình; lưu câu phủ định lại ghi chính chủ đề nhạy cảm xuống; giá trị cốt lõi là giải thích khác nhau cho người IT và non-IT |
 | 18/9 18:57 | Golden set đổi sang 39 case với Persona là trọng tâm (A ghi nhớ 12 · B tuân theo Persona 9 · C không phá luật 5 · E dặn lại 3 · D lõi 10); chốt quality bar §7 | Persona là tính năng chính khi trình bày; bộ 20 case CP3 chỉ đo lõi, không có số nào về Persona |
+| 18/9 19:25 | Lượt 1–2 trên 39 case; sửa: chặn ghi nhớ đổi định dạng, định nghĩa "ngắn gọn" trong prompt, khớp "nontech"; unit test không ghi trace | A08, E01/E03, A01 ở lượt 1 (`eval/eval_report_run1.md`) |
