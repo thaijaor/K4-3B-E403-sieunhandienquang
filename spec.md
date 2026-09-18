@@ -28,7 +28,7 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 ## §4. Thiết kế
 - **Lát cắt một câu:** Khi một học viên đang đọc bài trên VLearn hỏi để làm rõ một nội dung, AI dựa trên **Persona** của học viên và bằng chứng trong bài đang mở để quyết định **trả lời theo đúng cách học viên đã chọn, hỏi lại hay từ chối**, để học viên nhận câu trả lời vừa ý, có citation mở được mà không phải dặn lại.
 - **Persona (PERSONA.md):** văn bản ngắn ghi nền tảng và kiểu trả lời học viên muốn; học viên và Tutor cùng sửa được.
-  - Persona gồm 3 mục: *Tính cách Tutor* (học viên đặt) · *Tutor nhớ về bạn* (Tutor ghi khi học viên đồng ý) · *Không được nhớ* (học viên tự thêm). Tối đa 2.000 ký tự.
+  - Persona gồm 2 mục: *Tính cách Tutor* (học viên đặt) · *Tutor nhớ về bạn* (Tutor ghi khi học viên đồng ý; điều không muốn nhớ ghi dạng `Đừng nhớ: X`). Tối đa 2.000 ký tự.
   - Sửa Persona áp dụng ngay từ **câu hỏi tiếp theo**, kể cả trong chat đang mở. Không có version hay hoàn tác.
   - Tutor chỉ **đề xuất** thay đổi kèm diff `[Lưu] [Sửa] [Không]`; không tự ghi.
 - **Giao diện:** layout như VLearn — cột trái *Nội dung bài học* (nhóm bài dạng accordion, bài đang mở gắn "Đang học"), giữa là bài đọc, panel **Trợ giảng AI** bên phải mặc định ẩn, mở bằng nút "Đặt câu hỏi với AI". Header panel: `Persona` · `+ Chat mới` · lịch sử · đóng.
@@ -55,7 +55,7 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
   | G11 — Giải thích vì sao | Nút citation dưới mỗi câu trả lời mở đúng đoạn nguồn trong bài |
   | G9 — Sửa dễ dàng | Nút `Ngắn hơn` · `Có ví dụ` · `Mình hỏi ý khác` dưới mỗi câu trả lời |
   | G13/G14 — Học từ hành vi, thay đổi thận trọng | Thẻ đề xuất ghi nhớ Persona kèm diff, chỉ lưu khi bấm `Lưu` |
-  | G17 — Quyền kiểm soát tổng | Drawer Persona: xem/sửa trực tiếp, xoá phần "Tutor nhớ về bạn"; thêm mục "Không được nhớ" để chặn Tutor đề xuất |
+  | G17 — Quyền kiểm soát tổng | Drawer Persona: xem/sửa trực tiếp, xoá phần "Tutor nhớ về bạn"; dòng `Đừng nhớ: X` chặn Tutor đề xuất lại |
 
 ## §5. Kiểu lỗi — 4 lớp chỗ khó + kịch bản
 *(bản nháp từ mock CP2 và Persona — Cường soát, bổ sung)*
