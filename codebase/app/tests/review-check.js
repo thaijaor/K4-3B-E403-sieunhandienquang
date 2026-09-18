@@ -22,7 +22,7 @@ async page => {
     await page.screenshot({path:'output/playwright/review-reading-desktop.png'});
     await page.locator('#tutor-toggle').click();
     check(await page.locator('.lesson').evaluate(el => el.clientWidth) < wide, 'opening AI allocates right column');
-    check((await page.locator('.empty').innerText()).includes('Đang mở: Đọc câu trả lời cùng bằng chứng'), 'empty chat names current lesson');
+    check((await page.locator('.empty').innerText()).includes('Đang mở: LLM hoạt động như thế nào?'), 'empty chat names current lesson');
     check(await page.locator('#question').getAttribute('placeholder') === 'Hỏi bất cứ điều gì…', 'composer placeholder');
     await page.locator('#collapse').click();
     check(await page.locator('#chat-body').isHidden(), 'collapse hides chat body');

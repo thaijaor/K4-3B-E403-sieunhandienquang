@@ -6,6 +6,8 @@ Gồm giao diện đọc bài, chat có citation, UI Persona và backend lưu h�
 
 Sidebar trái có 3 Day, mỗi Day 2 bài Markdown mẫu tự viết trong `mock-lessons/`. Chỉ hỗ trợ H1, H2 có anchor, đoạn văn và danh sách đơn trong demo; không hiển thị Slides/Video. Citation mở đoạn gốc và đánh dấu heading trong bài. Không commit học liệu thật hoặc thư mục `data/`.
 
+Khóa minh họa hiện gồm LLM, prompt, temperature, grounding/citation, Persona và cải thiện câu trả lời. Mỗi bài 600–900 đơn vị tách bằng khoảng trắng, có ví dụ và thực hành mở. Xem `LESSON-CONTENT.md` cho nguồn biên soạn, tương thích lịch sử và hướng dẫn chạy 12 case trong `lesson-scenarios.json`. Các case chưa phải kết quả đánh giá AI thật.
+
 Panel AI mặc định ẩn, mở bằng “Đặt câu hỏi với AI” trên header. Đóng panel trả lại chiều ngang cho bài. Có lịch sử hội thoại trong cùng phiên, Chat mới, thu gọn và UI Persona. Trên mobile, sidebar/chat mở phủ vùng đọc và có nút đóng để quay lại bài.
 
 ## Chạy trên Windows

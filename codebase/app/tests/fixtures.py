@@ -40,7 +40,8 @@ class FakeServices:
             if self.reply_override is not None:
                 return copy.deepcopy(self.reply_override)
             text = payload["text"].lower()
-            source = self.lessons[payload["lesson_id"]]["sources"][0]
+            sources = self.lessons[payload["lesson_id"]]["sources"]
+            source = next((s for s in sources if s["id"] in payload.get("selected_source_ids", [])), sources[0])
             result = {"decision": "answer", "text": "[Fixture UI] Citation giúp bạn mở đúng nguồn để đối chiếu phát biểu. Đây là phản hồi cố định để thử giao diện, không phải AI.", "citations": [{"source_id": source["id"], "locator": source["locator"]}], "actions": [], "persona_proposals": []}
             if "mơ hồ" in text or "giải thích đoạn" in text:
                 result.update(decision="clarify", text="[Fixture UI] Bạn muốn làm rõ phần dẫn nguồn hay phần thiếu căn cứ?", citations=[], actions=[{"type": "send_message", "label": "Phần dẫn nguồn", "value": "Citation là gì?"}])

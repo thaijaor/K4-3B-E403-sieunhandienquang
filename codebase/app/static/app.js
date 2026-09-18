@@ -73,7 +73,7 @@ async function loadLesson(id) {
       } else card.append(node('p', block));
     }
     const footer = node('div', undefined, 'card-footer');
-    footer.append(node('span', 'Markdown · Bài mẫu', 'small muted'), button('Hỏi về đoạn này', () => {
+    footer.append(node('span', 'Markdown · Học liệu minh họa', 'small muted'), button('Hỏi về đoạn này', () => {
       setTutor(true); state.selected = [source.id]; selection(); $('question').focus();
       if (!$('question').value.trim()) $('question').value = 'Giải thích đoạn này'; controls();
 

@@ -9,6 +9,8 @@ async (page) => {
   await page.evaluate(() => localStorage.removeItem('tutor.chat'));
   await page.reload();
   await page.waitForFunction(() => document.getElementById('version').textContent.includes('v1'));
+  await page.getByRole('button', {name: /Grounding và citation/}).click();
+  await page.waitForFunction(() => document.getElementById('lesson-title').textContent === 'Grounding và citation');
   check(await page.locator('#tutor-panel').isHidden(), 'AI panel hidden by default');
   await page.locator('#tutor-toggle').click();
   const send = async (text) => {

@@ -1,49 +1,49 @@
 [
   {
+    "id": "llm-basics",
+    "day": "Day 01 · Làm quen AI/LLM",
+    "title": "LLM hoạt động như thế nào?",
+    "subtitle": "Học liệu minh họa do nhóm biên soạn · Không phải học liệu chính thức VLearn",
+    "sample": true,
+    "markdown": "mock-lessons/llm-basics.md"
+  },
+  {
+    "id": "demo-question",
+    "day": "Day 01 · Làm quen AI/LLM",
+    "title": "Viết prompt rõ ràng",
+    "subtitle": "Học liệu minh họa do nhóm biên soạn · Không phải học liệu chính thức VLearn",
+    "sample": true,
+    "markdown": "mock-lessons/prompt-basics.md"
+  },
+  {
+    "id": "temperature",
+    "day": "Day 02 · Sinh câu trả lời và kiểm chứng",
+    "title": "Temperature và cách sinh câu trả lời",
+    "subtitle": "Học liệu minh họa do nhóm biên soạn · Không phải học liệu chính thức VLearn",
+    "sample": true,
+    "markdown": "mock-lessons/temperature.md"
+  },
+  {
     "id": "demo-grounding",
-    "day": "Day 01 · Đọc và đặt câu hỏi",
-    "title": "Đọc câu trả lời cùng bằng chứng",
-    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
+    "day": "Day 02 · Sinh câu trả lời và kiểm chứng",
+    "title": "Grounding và citation",
+    "subtitle": "Học liệu minh họa do nhóm biên soạn · Không phải học liệu chính thức VLearn",
     "sample": true,
     "markdown": "mock-lessons/demo-grounding.md"
   },
   {
-    "id": "demo-question",
-    "day": "Day 01 · Đọc và đặt câu hỏi",
-    "title": "Đặt câu hỏi có ngữ cảnh",
-    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
+    "id": "persona-basics",
+    "day": "Day 03 · Cá nhân hóa và cải thiện",
+    "title": "Persona trong trợ giảng AI",
+    "subtitle": "Học liệu minh họa do nhóm biên soạn · Không phải học liệu chính thức VLearn",
     "sample": true,
-    "markdown": "mock-lessons/demo-question.md"
-  },
-  {
-    "id": "demo-notes",
-    "day": "Day 02 · Tổ chức kiến thức",
-    "title": "Ghi chú sau khi đọc",
-    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
-    "sample": true,
-    "markdown": "mock-lessons/demo-notes.md"
-  },
-  {
-    "id": "demo-examples",
-    "day": "Day 02 · Tổ chức kiến thức",
-    "title": "Học qua ví dụ",
-    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
-    "sample": true,
-    "markdown": "mock-lessons/demo-examples.md"
-  },
-  {
-    "id": "demo-review",
-    "day": "Day 03 · Tự kiểm tra",
-    "title": "Ôn tập chủ động",
-    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
-    "sample": true,
-    "markdown": "mock-lessons/demo-review.md"
+    "markdown": "mock-lessons/persona.md"
   },
   {
     "id": "demo-dialogue",
-    "day": "Day 03 · Tự kiểm tra",
-    "title": "Trao đổi với trợ giảng",
-    "subtitle": "Bài mẫu tự viết để thử giao diện · Không phải học liệu VLearn",
+    "day": "Day 03 · Cá nhân hóa và cải thiện",
+    "title": "Kiểm tra và cải thiện câu trả lời AI",
+    "subtitle": "Học liệu minh họa do nhóm biên soạn · Không phải học liệu chính thức VLearn",
     "sample": true,
     "markdown": "mock-lessons/demo-dialogue.md"
   }

@@ -1,5 +1,19 @@
 # Template AI Spec *(spec.md — commit trước hạn chốt spec: 21:00 18/9, tại CP4 · quality bar chốt từ thời điểm nộp)*
 
+## Bổ sung triển khai học liệu — 18/09/2026
+
+Phần này bổ sung cho §4 và §9 của bản spec Persona tại PR #5 (đối chiếu commit `f40e3ab2a521ef95cbad421882a3c5cc668d2460`), không thay thế evidence, quality bar, phân công hoặc canvas CP1. Template phía dưới được giữ nguyên để không ghi đè phần teammate đang cập nhật.
+
+- Theo feedback “cho mấy cái này có bài học đàng hoàng”, prototype cung cấp 6 bài AI/LLM cơ bản tự biên soạn: LLM, prompt, temperature, grounding/citation, Persona, kiểm tra và cải thiện câu trả lời; bố cục 3 ngày × 2 bài.
+- Mỗi bài có mục tiêu, giải thích, ví dụ đời thường/kỹ thuật, giới hạn, thực hành mở và câu hỏi; H2 có anchor ổn định cho citation. Nhãn học liệu minh họa được giữ, không nhận là nội dung VLearn chính thức.
+- Persona vẫn là trọng tâm trải nghiệm: cùng câu hỏi và nguồn, thay đổi cách giải thích theo snapshot của chat. Luật nguồn và không đưa đáp án quiz không bị Persona ghi đè. Không triển khai thêm service AI/Persona trong thay đổi này.
+- Thêm 12 kịch bản bổ sung tại `codebase/app/lesson-scenarios.json`, hướng dẫn và nguồn đối chiếu tại `codebase/app/LESSON-CONTENT.md`. Không thay golden set hoặc tự chốt quality bar. Kiểm thử UI bằng doubles không được ghi là đánh giá chất lượng AI thật.
+
+| Thời điểm | Đổi gì | Vì sao |
+|---|---|---|
+| 18/09/2026 | Thay nội dung ngắn bằng 6 bài AI/LLM có ví dụ, thực hành, nguồn nội bộ và 12 case Persona | Feedback cần học liệu đầy đủ để người dùng thực sự đọc bài và hỏi Tutor; giữ hướng Persona và citation của PR #5 |
+
+
 > Cấu trúc phủ đúng "SPEC 8 phần" của chương trình: Bằng chứng (§1-§2) · Lát cắt (§4) · Canvas (đính kèm CP1) · Augment/Automate (§4) · 4 đường đi của trải nghiệm (§6) · Kiểu lỗi (§5) · Kiểm thử (§7) · Phân công (§8). Hướng dẫn viết từng mục: `02-guide.md`.
 
 ```markdown
