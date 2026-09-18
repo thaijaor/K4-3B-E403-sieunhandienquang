@@ -40,6 +40,11 @@ async (page) => {
   check(current.text.startsWith('Ngắn gọn'), 'persona saved without version');
   await page.getByRole('button', {name: 'Đóng Persona'}).click();
   await send('Ghi nhớ ví dụ');
+  const firstProposal = page.locator('.proposal').first();
+  check(await firstProposal.locator('.diff-add').count() === 1, 'proposal highlights only the added memory line');
+  check((await firstProposal.locator('.diff-add').innerText()).includes('Ưu tiên ví dụ'), 'proposal diff shows the proposed memory');
+  check(await firstProposal.locator('.diff-remove').count() === 0, 'addition proposal has no removed line');
+  check(await firstProposal.locator('.diff-before,.diff-after').count() === 0, 'proposal does not duplicate full before and after documents');
   await page.locator('.proposal').getByRole('button', {name: 'Không', exact: true}).click();
   await page.waitForFunction(() => document.querySelector('.proposal-status').textContent.includes('Đã bỏ qua'));
   current = await (await page.request.get('http://127.0.0.1:8765/api/persona')).json();
