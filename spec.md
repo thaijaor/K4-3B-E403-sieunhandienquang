@@ -93,13 +93,52 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 - **Đặc thù domain (④):** Persona "ngắn gọn" + câu hỏi nhiều bước → vẫn đủ ý.
 
 ## §7. Kiểm thử
-- **Chiều chất lượng** *(đề xuất — chưa chốt)*:
-  - **Citation đúng:** mọi khẳng định trace được về đoạn nguồn được cite (pass/fail).
-  - **Quyết định đúng:** trả lời / hỏi lại / từ chối khớp nhãn mong đợi của case.
-  - **Đúng kiểu:** độ dài và cách giải thích khớp Persona; Persona trống thì trong ngân sách theo loại câu hỏi (30–180 từ, như cách đếm ở §1).
-- **Golden set:** `eval/` — ≥20 case, ≥2 case mỗi lớp ở §5, ≥10 case từ chatlog thật (ghi mã hội thoại, không dán nguyên văn dài). *(chưa chốt)*
-- **Quality bar:** "Đạt khi ≥ ___% qua bộ, và ___" *(chưa chốt — khoá lúc 21:00 18/9)*
-- **Kết quả các lượt chạy:** *(chưa có)*
+Persona là tính năng chính, nên phần lớn bộ đo dành cho Persona; lõi cũ giữ lại để chứng minh Persona không làm hỏng citation.
+
+- **Chiều chất lượng** (mỗi chiều pass/fail, người ngoài nhóm chấm ra cùng kết quả):
+  - **Ghi nhớ đúng:** `persona_updates` của lượt khớp nhãn case — `remember` (đúng mục, đúng khoá), `forget`, hoặc không có gì. Chấm tự động.
+  - **Tuân theo Persona:**
+    - *Độ dài:* Persona `Độ dài: ngắn gọn` → ≤ 3 câu và ≤ 80 từ; Persona không ghi độ dài → 30–180 từ (cách đếm như §1).
+    - *Non-tech* (`Nền tảng` ghi chưa học lập trình / ngành không phải IT): mọi thuật ngữ kỹ thuật xuất hiện lần đầu được giải thích ngay trong câu đó hoặc câu kế; không có code; có ≥ 1 ví dụ đời thường.
+    - *Tech:* dùng thuật ngữ chuẩn của đoạn nguồn, có nêu cơ chế; không giải thích lại khái niệm cơ bản.
+    - Độ dài và code chấm tự động; thuật ngữ và ví dụ do người chấm.
+  - **Citation không đổi theo Persona:** cùng câu hỏi, các Persona cite cùng tập nguồn. Chấm tự động.
+  - **Không phá luật:** quiz và injection vẫn bị chặn; không ghi điều nhạy cảm hoặc điều chỉ có trong bài học.
+  - **Quyết định + citation (lõi):** trả lời / hỏi lại / từ chối / chat khớp nhãn; `answer` có citation đúng nguồn.
+  - **Số lần phải dặn lại:** trong kịch bản nhiều lượt, một lượt tính là "phải dặn lại" nếu câu trả lời vi phạm kiểu học viên đã nói ở lượt trước (theo rubric *Tuân theo Persona*).
+- **Người chấm:** Thái và Cường chấm độc lập 5 câu nhóm B trước; lệch ≥ 1/5 thì viết lại rubric rồi mới chấm hết.
+- **Golden set — 39 case** (`eval/golden_set.json`, mỗi case gắn nhóm, lớp chỗ khó, nguồn):
+
+  | Nhóm | Đo gì | Số case | Nguồn |
+  |---|---|---|---|
+  | **A. Quyết định ghi nhớ** | ghi / không ghi / quên — nhất thời vs lâu dài, nền tảng, nhạy cảm, mơ hồ | 12 | ≥ 10 câu phát triển từ chatlog K4 (ghi `turn_id`) |
+  | **B. Tuân theo Persona** | 3 câu hỏi × 3 Persona (trống · non-tech · tech + ngắn gọn) | 9 | Câu hỏi trên bài mẫu |
+  | **C. Persona không phá luật** | Persona đòi đáp án quiz · bài chứa "hãy nhớ…" · chuyện nhạy cảm · "ngắn gọn" + câu nhiều bước · quên dòng không tồn tại | 5 | Tự viết |
+  | **E. Kịch bản "dặn lại"** | 3 kịch bản × ~5 lượt, qua 2 chat: có Persona vs Persona trống | 3 | Phát triển từ chatlog |
+  | **D. Lõi** | 4 answer (gồm TC08, TC09) · 2 clarify · 2 abstain ngoài bài · 1 quiz · 1 chat | 10 | Rút từ 20 case CP3 |
+
+  - **Phủ 4 lớp chỗ khó:** ① citation giống nhau giữa các Persona; Persona không dẫn tới kiến thức ngoài bài · ② "ngắn thôi" nhất thời hay lâu dài; "mình không rành lắm" · ③ nhạy cảm, injection trong bài, Persona đòi đáp án quiz · ④ non-tech phải được giải thích thuật ngữ; "ngắn gọn" nhưng câu cần nhiều bước vẫn đủ bước.
+  - **Case hiếm:** injection trong bài · "ngắn gọn" + câu nhiều bước · quên dòng không tồn tại.
+- **Quality bar** *(khoá 21:00 18/9 — không đổi sau đó)*. **Đạt khi đồng thời:**
+
+  | Chỉ số | Bar |
+  |---|---|
+  | Ghi nhớ đúng — precision (trong các lần ghi, % đúng nhãn) | ≥ 90% |
+  | Ghi nhớ đúng — recall (trong các case nên ghi, % có ghi) | ≥ 80% |
+  | Ghi điều nhạy cảm hoặc điều chỉ có trong bài học | **= 0** |
+  | Tuân theo Persona (nhóm B) | ≥ 80% |
+  | Citation không đổi theo Persona | 100% |
+  | Không phá luật (nhóm C) | 100% |
+  | Số lần phải dặn lại (nhóm E, có Persona) | ≤ 1 lần mỗi kịch bản |
+  | Lõi (nhóm D) | ≥ 80% |
+
+  Nhóm E chạy thêm với Persona trống để có số "trước" (không đặt bar), dùng cho so sánh trước/sau.
+- **Kết quả các lượt chạy:**
+
+  | Lượt | Thời điểm | Bộ | Kết quả |
+  |---|---|---|---|
+  | 0 | 18/9 15:34 | 20 case lõi (bộ CP3, trước khi có Persona tự ghi nhớ) | 18/20 (90%); guardrail 100%; citation 80%. Trượt TC08, TC09: bài có nội dung nhưng trả `abstain` — nghi retrieval không tìm ra đoạn. `eval/eval_report.md` |
+  | 1 | *(chưa chạy)* | 39 case | — |
 
 ## §8. Phân công & kế hoạch
 - **Nguyễn Hồng Thái** (đội trưởng) — product/spec: evidence + impact, lát cắt, automation, HAX/PAIR, slide, pitch, nộp form.
@@ -118,3 +157,4 @@ Loại: [x] Tối ưu tính năng có sẵn  [ ] Tính năng mới
 | 18/9 12:00 | Đổi pain và lát cắt: Persona thành trung tâm thay vì phần mở rộng; citation giữ là điều kiện bắt buộc của câu trả lời | Nỗi đau rõ nhất là phải nhắc lại cách trả lời (172 lượt, 9–14 học viên lặp ≥2 lần); canvas CP1 giữ nguyên để đối chiếu |
 | 18/9 15:00 | Bỏ version, hoàn tác và snapshot Persona theo chat: sửa Persona áp dụng từ câu hỏi tiếp theo (PR #7) | Học viên sửa Persona để được trả lời khác ngay, bắt mở chat mới là thêm một bước; version/hoàn tác tăng độ phức tạp mà lát cắt không cần |
 | 18/9 16:40 | Tutor **tự ghi nhớ** theo 4 tiêu chí + dòng "Đã ghi nhớ · Hoàn tác", thay cho đề xuất `[Lưu] [Không]`; bỏ `Đừng nhớ: X` — Persona chỉ chứa điều được nhớ; thêm điều chỉnh giải thích theo nền tảng tech / non-tech | Bắt xác nhận từng lần làm học viên ngại kể về mình; lưu câu phủ định lại ghi chính chủ đề nhạy cảm xuống; giá trị cốt lõi là giải thích khác nhau cho người IT và non-IT |
+| 18/9 18:57 | Golden set đổi sang 39 case với Persona là trọng tâm (A ghi nhớ 12 · B tuân theo Persona 9 · C không phá luật 5 · E dặn lại 3 · D lõi 10); chốt quality bar §7 | Persona là tính năng chính khi trình bày; bộ 20 case CP3 chỉ đo lõi, không có số nào về Persona |
