@@ -6,11 +6,14 @@ PROPOSE_TOOL = {
     "function": {
         "name": "propose_persona_memory",
         "description": (
-            "Đề xuất ghi vào Persona của học viên khi họ nêu một mong muốn LÂU DÀI về cách được trả lời "
-            "(vd 'ngắn gọn thôi', 'cho ví dụ đời thường', 'xưng anh em') hoặc nhờ nhớ điều về bản thân "
-            "(vd 'nhớ giúp mình chưa biết code'). Khi học viên bảo đừng nhớ một điều, đề xuất dòng "
-            "'Đừng nhớ: <điều đó>' vào 'Tutor nhớ về bạn'. Không dùng cho yêu cầu chỉ áp dụng một câu. "
-            "Chỉ là đề xuất: học viên bấm Lưu mới ghi."
+            "Đề xuất ghi vào Persona CHỈ KHI học viên muốn điều đó áp dụng về sau: nói rõ 'từ nay', 'từ giờ', "
+            "'lần sau', 'luôn luôn', 'mỗi khi', 'nhớ giúp', 'ghi nhớ' (vd 'từ nay trả lời ngắn thôi', "
+            "'nhớ giúp mình chưa biết code'), hoặc tự giới thiệu điều bền vững về bản thân để Tutor dùng lâu dài "
+            "(vd 'mình học kế toán, chưa học lập trình bao giờ'). Khi học viên bảo đừng nhớ một điều, đề xuất dòng "
+            "'Đừng nhớ: <điều đó>' vào 'Tutor nhớ về bạn'. "
+            "KHÔNG gọi cho yêu cầu chỉ cho câu trả lời hiện tại, dù là về cách trả lời: 'ngắn hơn đi', 'giải thích lại', "
+            "'dễ hiểu hơn', 'cho ví dụ', 'chi tiết hơn', 'tóm tắt lại' — chỉ cần điều chỉnh câu trả lời. "
+            "Không chắc thì KHÔNG gọi. Chỉ là đề xuất: học viên bấm Lưu mới ghi."
         ),
         "parameters": {
             "type": "object",
@@ -32,8 +35,10 @@ PERSONA_RULES = (
 )
 
 MEMORY_RULES = (
-    "Khi học viên nêu mong muốn lâu dài về cách trả lời hoặc nhờ nhớ điều về bản thân, gọi propose_persona_memory "
-    "rồi vẫn trả lời câu hỏi như bình thường. Không tự nói là đã lưu — học viên sẽ thấy thẻ đề xuất để quyết định."
+    "Ghi nhớ chỉ dành cho điều học viên muốn áp dụng về sau (có ý 'từ nay', 'lần sau', 'luôn', 'nhớ giúp', "
+    "hoặc tự giới thiệu điều bền vững về bản thân). Khi đó gọi propose_persona_memory rồi vẫn trả lời như bình thường. "
+    "Yêu cầu chỉ cho lúc này ('ngắn hơn đi', 'giải thích lại', 'cho ví dụ') thì chỉ điều chỉnh câu trả lời, "
+    "không gọi tool. Không chắc thì không gọi. Không tự nói là đã lưu — học viên sẽ thấy thẻ đề xuất để quyết định."
 )
 
 

@@ -12,7 +12,7 @@ from app import create_app
 from persona.store import DEFAULT_TEXT, PersonaStore, add_item, clear_section, section_items
 
 FIXTURES = Path(__file__).parent / "fixtures" / "lessons.json"
-BODY = {"request_id": "req-1", "chat_id": "chat-1", "lesson_id": "demo", "text": "ngắn gọn thôi nha"}
+BODY = {"request_id": "req-1", "chat_id": "chat-1", "lesson_id": "demo", "text": "từ nay trả lời ngắn gọn thôi nha"}
 
 
 def call(name, arguments, call_id="call-1"):
