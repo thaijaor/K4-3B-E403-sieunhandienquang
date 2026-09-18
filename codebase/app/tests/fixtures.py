@@ -1,0 +1,72 @@
+"""Test-only upstream doubles. Never imported by the application server."""
+import copy
+import threading
+import uuid
+from fastapi import HTTPException
+
+
+class FakeServices:
+    ai_url = "test-double"
+    persona_url = "test-double"
+    is_fixture = True
+
+    def __init__(self):
+        self.calls = []
+        self.personas = {}
+        self.versions = {}
+        self.proposals = {}
+        self.failure = None
+        self.reply_override = None
+        self.entered = threading.Event()
+        self.release = None
+
+    def current(self, owner):
+        if owner not in self.personas:
+            self.personas[owner] = {"text": "# PERSONA — Tutor của tôi\n\n## Tính cách Tutor\n- Xưng hô: mình – bạn\n\n## Tutor nhớ về bạn\n\n## Không được nhớ\n", "version": 1, "updated_at": "Fixture UI"}
+            self.versions[owner] = {1: self.personas[owner]["text"]}
+        return self.personas[owner]
+
+    def request(self, kind, method, path, owner, payload=None, request_id=None):
+        self.calls.append((kind, method, path, owner, copy.deepcopy(payload), request_id))
+        if self.failure:
+            raise self.failure
+        if kind == "ai":
+            self.entered.set()
+            if self.release:
+                self.release.wait(5)
+            if self.reply_override is not None:
+                return copy.deepcopy(self.reply_override)
+            text = payload["text"].lower()
+            result = {"decision": "answer", "text": "[Fixture UI] Citation giúp bạn mở đúng nguồn để đối chiếu phát biểu. Đây là phản hồi cố định để thử giao diện, không phải AI.", "citations": [{"source_id": "sample-01", "locator": "1"}], "actions": [], "persona_proposals": []}
+            if "mơ hồ" in text or "giải thích đoạn" in text:
+                result.update(decision="clarify", text="[Fixture UI] Bạn muốn làm rõ phần dẫn nguồn hay phần thiếu căn cứ?", citations=[], actions=[{"type": "send_message", "label": "Phần dẫn nguồn", "value": "Citation là gì?"}])
+            if "quiz" in text or "ngoài bài" in text:
+                result.update(decision="abstain", text="[Fixture UI] Mình chưa thể trả lời yêu cầu này. Bạn có thể xem lại bài mẫu.", citations=[])
+            if "ghi nhớ" in text:
+                current = self.current(owner)
+                proposal = {"id": str(uuid.uuid4()), "base_version": current["version"], "before": current["text"], "after": current["text"] + "\n- Ưu tiên ví dụ dễ hiểu (fixture)"}
+                self.proposals[proposal["id"]] = (owner, proposal)
+                result["persona_proposals"] = [proposal]
+            return result
+        current = self.current(owner)
+        if method == "GET":
+            return copy.deepcopy(current)
+        if path.endswith("/reject"):
+            return {"status": "rejected"}
+        if payload["expected_version"] != current["version"]:
+            raise HTTPException(409, "Phiên bản đã thay đổi. Tải lại bản mới và đối chiếu bản nháp.")
+        if path.endswith("/accept"):
+            proposal_owner, proposal = self.proposals[path.split("/")[-2]]
+            if owner != proposal_owner:
+                raise HTTPException(404, "Proposal not found")
+            text = payload.get("edited_text") if payload.get("edited_text") is not None else proposal["after"]
+        elif path.endswith("/undo"):
+            text = self.versions[owner][payload["target_version"]]
+        elif path.endswith("/memory"):
+            text = "# PERSONA — Tutor của tôi\n\n## Tính cách Tutor\n- Xưng hô: mình – bạn\n\n## Tutor nhớ về bạn\n\n## Không được nhớ\n"
+        else:
+            text = payload["text"]
+        updated = {"text": text, "version": current["version"] + 1, "updated_at": "Fixture UI"}
+        self.personas[owner] = updated
+        self.versions[owner][updated["version"]] = text
+        return copy.deepcopy(updated)
